@@ -32,7 +32,7 @@ namespace McPing
                                 Task.Run(async () =>
                                 {
                                     CancellationTokenSource cancel = new();
-                                    var task = new Task(() =>
+                                    var task =  Task.Run(() =>
                                     {
                                         string local = PingUtils.Get(ip, port);
                                         if (local == null)
@@ -44,7 +44,7 @@ namespace McPing
                                             SendMessageGroupImg(pack.id, local);
                                         }
                                     }, cancel.Token);
-                                    int timeout = 3000;
+                                    int timeout = 8000;
                                     if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
                                     {
                                         cancel.Cancel(false);
@@ -58,7 +58,7 @@ namespace McPing
                                 Task.Run(async () =>
                                 {
                                     CancellationTokenSource cancel = new();
-                                    var task = new Task(() =>
+                                    var task = Task.Run(() =>
                                     {
                                         string local = PingUtils.Get(ip);
                                         if (local == null)
@@ -70,7 +70,7 @@ namespace McPing
                                             SendMessageGroupImg(pack.id, local);
                                         }
                                     }, cancel.Token);
-                                    int timeout = 3000;
+                                    int timeout = 8000;
                                     if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
                                     {
                                         cancel.Cancel(false);
