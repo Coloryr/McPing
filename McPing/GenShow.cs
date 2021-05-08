@@ -68,13 +68,21 @@ namespace McPing
             graphics.InterpolationMode = InterpolationMode.High;
             graphics.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             graphics.Clear(bg_color);
+            Bitmap bitmap1;
+            if (info.IconData == null)
+            {
+                bitmap1 = new(64, 64);
+            }
+            else
+            {
 
-            using MemoryStream stream = new MemoryStream();
-            stream.Write(info.IconData);
-            stream.Seek(0, SeekOrigin.Begin);
-            using Bitmap bitmap1 = Bitmap.FromStream(stream) as Bitmap;
-
+                using MemoryStream stream = new MemoryStream();
+                stream.Write(info.IconData);
+                stream.Seek(0, SeekOrigin.Begin);
+                bitmap1 = Bitmap.FromStream(stream) as Bitmap;
+            }
             graphics.DrawImage(bitmap1, 10, 10);
+            bitmap1.Dispose();
 
             var temp = info.MOTD.Split('\n');
             float y = 10;
