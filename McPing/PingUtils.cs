@@ -37,7 +37,7 @@ namespace McPing
                 origin = IP;
                 if (new Resolver().Query("_minecraft._tcp." + IP, QType.SRV).Result.Answers?.FirstOrDefault()?.RECORD is RecordSRV result)
                 {
-                    tcp = new TcpClient(IP = result.TARGET, Port = result.PORT);
+                    tcp = new TcpClient(IP = result.TARGET[..^1], Port = result.PORT);
                 }
                 else
                 {
