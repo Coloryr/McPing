@@ -124,6 +124,7 @@ namespace McPing
                 {
                     LogOut("正在退出");
                     robot.Stop();
+                    return;
                 }
                 else if (arg[0] == "test")
                 {
