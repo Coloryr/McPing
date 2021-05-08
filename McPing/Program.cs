@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace McPing
 {
@@ -28,32 +29,54 @@ namespace McPing
                             if (message.Length > 2)
                             {
                                 var port = message[2];
-                                Task.Run(() =>
+                                Task.Run(async () =>
                                 {
-                                    string local = PingUtils.Get(ip, port);
-                                    if (local == null)
+                                    CancellationTokenSource cancel = new();
+                                    var task = new Task(() =>
                                     {
-                                        SendMessageGroup(pack.id, $"获取{ip}:{port}错误");
-                                    }
-                                    else
+                                        string local = PingUtils.Get(ip, port);
+                                        if (local == null)
+                                        {
+                                            SendMessageGroup(pack.id, $"获取{ip}:{port}错误");
+                                        }
+                                        else
+                                        {
+                                            SendMessageGroupImg(pack.id, local);
+                                        }
+                                    }, cancel.Token);
+                                    int timeout = 3000;
+                                    if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
                                     {
-                                        SendMessageGroupImg(pack.id, local);
+                                        cancel.Cancel(false);
+                                        SendMessageGroup(pack.id, $"获取{ip}:{port}超时");
                                     }
+                                   
                                 });
                             }
                             else
                             {
-                                Task.Run(() =>
+                                Task.Run(async () =>
                                 {
-                                    string local = PingUtils.Get(ip);
-                                    if (local == null)
+                                    CancellationTokenSource cancel = new();
+                                    var task = new Task(() =>
                                     {
-                                        SendMessageGroup(pack.id, $"获取{ip}错误");
-                                    }
-                                    else
+                                        string local = PingUtils.Get(ip);
+                                        if (local == null)
+                                        {
+                                            SendMessageGroup(pack.id, $"获取{ip}错误");
+                                        }
+                                        else
+                                        {
+                                            SendMessageGroupImg(pack.id, local);
+                                        }
+                                    }, cancel.Token);
+                                    int timeout = 3000;
+                                    if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
                                     {
-                                        SendMessageGroupImg(pack.id, local);
+                                        cancel.Cancel(false);
+                                        SendMessageGroup(pack.id, $"获取{ip}超时");
                                     }
+
                                 });
                             }
                         }
