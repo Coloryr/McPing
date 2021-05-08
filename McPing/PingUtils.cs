@@ -253,6 +253,10 @@ namespace McPing
                             {
                                 this.MOTD = descriptionDataObj["text"].ToString();
                             }
+                            else if (descriptionDataObj.ContainsKey("translate"))
+                            {
+                                this.MOTD = descriptionDataObj["translate"].ToString();
+                            }
                         }
                     }
 
