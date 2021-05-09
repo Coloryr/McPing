@@ -43,11 +43,11 @@ namespace McPing
             player_color?.Dispose();
             version_color?.Dispose();
 
-            font_normal = new Font(Program.Config.Show.Font, 14);
-            font_bold = new Font(Program.Config.Show.Font, 14, FontStyle.Bold);
-            font_italic = new Font(Program.Config.Show.Font, 14, FontStyle.Italic);
-            font_underline = new Font(Program.Config.Show.Font, 14, FontStyle.Underline);
-            font_strikethrough = new Font(Program.Config.Show.Font, 14, FontStyle.Strikeout);
+            font_normal = new Font(Program.Config.Show.Font, 13);
+            font_bold = new Font(Program.Config.Show.Font, 13, FontStyle.Bold);
+            font_italic = new Font(Program.Config.Show.Font, 13, FontStyle.Italic);
+            font_underline = new Font(Program.Config.Show.Font, 13, FontStyle.Underline);
+            font_strikethrough = new Font(Program.Config.Show.Font, 13, FontStyle.Strikeout);
 
             bg_color = ColorTranslator.FromHtml(Program.Config.Show.BGColor);
             good_ping_color = new SolidBrush(ColorTranslator.FromHtml(Program.Config.Show.GoodPingColor));
@@ -100,51 +100,52 @@ namespace McPing
                         continue;
                     char color = item2.ToLower()[0];
                     string draw = "";
-                    if (item2.Length == 1)
+                    
+                    if (color == 'k')
                     {
-                        if (color == 'k')
-                        {
-                            brush = GetBrush(randomString[new Random().Next(randomString.Length - 1)]);
-                        }
-                        else if (color == 'l')
-                        {
-                            now = FontState.bold;
-                        }
-                        else if (color == 'm')
-                        {
-                            now = FontState.strikethrough;
-                        }
-                        else if (color == 'n')
-                        {
-                            now = FontState.underline;
-                        }
-                        else if (color == 'o')
-                        {
-                            now = FontState.italic;
-                        }
-                        else if (color == 'r')
-                        {
-                            now = FontState.normal;
-                        }
-                        else
-                        {
-                            brush = GetBrush(color);
-                        }
-                        continue;
+                        brush = GetBrush(randomString[new Random().Next(randomString.Length - 1)]);
+                    }
+                    else if (color == 'l')
+                    {
+                        now = FontState.bold;
+                        draw = item2[1..];
+                    }
+                    else if (color == 'm')
+                    {
+                        now = FontState.strikethrough;
+                        draw = item2[1..];
+                    }
+                    else if (color == 'n')
+                    {
+                        now = FontState.underline;
+                        draw = item2[1..];
+                    }
+                    else if (color == 'o')
+                    {
+                        now = FontState.italic;
+                        draw = item2[1..];
+                    }
+                    else if (color == 'r')
+                    {
+                        now = FontState.normal;
+                        brush = Brushes.White;
+                        draw = item2[1..];
                     }
                     else
                     {
-                        brush = GetBrush(color);
-                        if (brush == null)
+                        var temp2 = GetBrush(color);
+                        if (temp2 == null)
                         {
-                            brush = Brushes.White;
                             draw = item2;
                         }
                         else
                         {
+                            brush = temp2;
                             draw = item2[1..];
                         }
                     }
+                    if (draw.Length == 0)
+                        continue;
                     switch (now)
                     {
                         default:
@@ -175,6 +176,7 @@ namespace McPing
                 }
                 y += 20;
             }
+            y = 50;
             x = 80;
             string data = $"在线人数:{info.CurrentPlayerCount}/{info.MaxPlayerCount}";
             res = graphics.MeasureString(data, font_italic);

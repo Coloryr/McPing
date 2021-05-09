@@ -30,7 +30,7 @@ namespace McPing
             try
             {
                 tcp = new TcpClient(IP, Port);
-                origin = $"{IP}:{Port}";
+                origin = $"{IP}_{Port}";
             }
             catch (SocketException)
             {
