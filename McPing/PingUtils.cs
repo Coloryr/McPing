@@ -7,42 +7,59 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace McPing
 {
     class PingUtils
     {
-        public static string Get(string IP)
+        public static string Get(string IP, CancellationToken cancellationToken)
         {
-            return Get(IP, 25565);
+            return Get(IP, 25565, cancellationToken).Result;
         }
-        public static string Get(string IP,string Port)
+        public static string Get(string IP,string Port, CancellationToken cancellationToken)
         {
             if (!ushort.TryParse(Port, out var port))
                 return null;
-            return Get(IP, port);
+            return Get(IP, port, cancellationToken).Result;
         }
-        private static string Get(string IP, ushort Port)
+        private static async Task<string> Get(string IP, ushort Port, CancellationToken cancellationToken)
         {
             string origin;
             TcpClient tcp;
             try
             {
-                tcp = new TcpClient(IP, Port);
+                tcp = new TcpClient();
+                await tcp.ConnectAsync(IP, Port, cancellationToken);
                 origin = $"{IP}_{Port}";
             }
             catch (SocketException)
             {
-                origin = IP;
-                if (new Resolver().Query("_minecraft._tcp." + IP, QType.SRV).Result.Answers?.FirstOrDefault()?.RECORD is RecordSRV result)
+                if (cancellationToken.IsCancellationRequested)
                 {
-                    tcp = new TcpClient(IP = result.TARGET[..^1], Port = result.PORT);
+                    return null;
+                }
+                origin = IP;
+                var res = new Resolver().Query("_minecraft._tcp." + IP, QType.SRV);
+                res.Wait(cancellationToken);
+                if (res.Result?.Answers?.FirstOrDefault()?.RECORD is RecordSRV result)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return null;
+                    }
+                    tcp = new TcpClient();
+                    await tcp.ConnectAsync(IP = result.TARGET[..^1], Port = result.PORT, cancellationToken);
                 }
                 else
                 {
                     return null;
                 }
+            }
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return null;
             }
             ServerInfo info = new();
             if (info.StartGetServerInfo(tcp, IP, Port, origin))
