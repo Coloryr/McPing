@@ -91,7 +91,7 @@ namespace McPing
             foreach (var item in temp)
             {
                 x = 80;
-                Brush brush = null;
+                Brush brush = Brushes.White;
                 FontState now = FontState.normal;
                 var temp1 = item.Split("§");
                 foreach (var item2 in temp1)
