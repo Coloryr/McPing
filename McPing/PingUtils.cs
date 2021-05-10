@@ -16,6 +16,13 @@ namespace McPing
     {
         public static string Get(string IP, CancellationToken cancellationToken)
         {
+            if (IP.Contains(":"))
+            {
+                var temp = IP.Split(':');
+                if (!ushort.TryParse(temp[1], out var port))
+                    return null;
+                return Get(temp[0], port, cancellationToken).Result;
+            }
             return Get(IP, 25565, cancellationToken).Result;
         }
         public static string Get(string IP,string Port, CancellationToken cancellationToken)
