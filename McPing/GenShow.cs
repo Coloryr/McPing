@@ -79,7 +79,8 @@ namespace McPing
                 using MemoryStream stream = new MemoryStream();
                 stream.Write(info.IconData);
                 stream.Seek(0, SeekOrigin.Begin);
-                bitmap1 = Bitmap.FromStream(stream) as Bitmap;
+                bitmap1 = Image.FromStream(stream) as Bitmap;
+                bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
             }
             graphics.DrawImage(bitmap1, 10, 10);
             bitmap1.Dispose();
