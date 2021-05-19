@@ -97,7 +97,7 @@ namespace McPing
                 var temp1 = item.Split("§");
                 foreach (var item2 in temp1)
                 {
-                    if (string.IsNullOrWhiteSpace(item2))
+                    if (item2.Length == 0)
                         continue;
                     char color = item2.ToLower()[0];
                     string draw = "";
