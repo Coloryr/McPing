@@ -15,6 +15,8 @@ namespace McPing
         private const string PicName = "PicTemp";
         private static string PicDir;
 
+        private static StringFormat sf;
+
         private static Font font_normal;
         private static Font font_bold;
         private static Font font_italic;
@@ -28,6 +30,9 @@ namespace McPing
 
         public static void Init()
         {
+            sf = StringFormat.GenericTypographic;
+            sf.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
+
             PicDir = Program.RunLocal + "PicTemp\\";
             if (!Directory.Exists(PicDir))
             {
@@ -151,23 +156,23 @@ namespace McPing
                     {
                         default:
                         case FontState.normal:
-                            res = graphics.MeasureString(draw, font_normal);
+                            res = graphics.MeasureString(draw, font_normal, PointF.Empty, sf);
                             graphics.DrawString(draw, font_normal, brush, x, y);
                             break;
                         case FontState.bold:
-                            res = graphics.MeasureString(draw, font_bold);
+                            res = graphics.MeasureString(draw, font_bold, PointF.Empty, sf);
                             graphics.DrawString(draw, font_bold, brush, x, y);
                             break;
                         case FontState.strikethrough:
-                            res = graphics.MeasureString(draw, font_strikethrough);
+                            res = graphics.MeasureString(draw, font_strikethrough, PointF.Empty, sf);
                             graphics.DrawString(draw, font_strikethrough, brush, x, y);
                             break;
                         case FontState.underline:
-                            res = graphics.MeasureString(draw, font_underline);
+                            res = graphics.MeasureString(draw, font_underline, PointF.Empty, sf);
                             graphics.DrawString(draw, font_underline, brush, x, y);
                             break;
                         case FontState.italic:
-                            res = graphics.MeasureString(draw, font_italic);
+                            res = graphics.MeasureString(draw, font_italic, PointF.Empty, sf);
                             graphics.DrawString(draw, font_italic, brush, x, y);
                             break;
                     }

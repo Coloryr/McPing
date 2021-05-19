@@ -233,7 +233,7 @@ namespace McPing
 
                     if (jsonData.ContainsKey("players"))
                     {
-                        JObject playerData = (JObject)jsonData["players"];
+                        JObject playerData = jsonData["players"] as JObject;
                         this.MaxPlayerCount = int.Parse(playerData["max"].ToString());
                         this.CurrentPlayerCount = int.Parse(playerData["online"].ToString());
                         if (playerData.ContainsKey("sample"))
@@ -255,11 +255,15 @@ namespace McPing
                         JToken descriptionData = jsonData["description"];
                         if (descriptionData.Type == JTokenType.String)
                         {
-                            this.MOTD = descriptionData.ToString();
+                            MOTD = descriptionData.ToString();
                         }
                         else if (descriptionData.Type == JTokenType.Object)
                         {
-                            JObject descriptionDataObj = (JObject)descriptionData;
+                            JObject descriptionDataObj = descriptionData as JObject;
+                            if (descriptionDataObj.ContainsKey("text"))
+                            {
+                                MOTD += descriptionDataObj["text"].ToString();
+                            }
                             if (descriptionDataObj.ContainsKey("extra"))
                             {
                                 foreach (var item in descriptionDataObj["extra"])
@@ -267,19 +271,21 @@ namespace McPing
                                     string text = item["text"].ToString();
                                     string color = item["color"]?.ToString();
                                     color = GetColor(color);
-                                    if (!string.IsNullOrWhiteSpace(text))
+                                    if (text.Length != 0)
                                     {
-                                        this.MOTD += color + text;
+                                        MOTD += color + text;
                                     }
+                                    if (item["extra"] is JArray array)
+                                        foreach (var item1 in array)
+                                        {
+                                            MOTD += item1["text"]?.ToString();
+                                        }
                                 }
                             }
-                            else if (descriptionDataObj.ContainsKey("text"))
+
+                            if (descriptionDataObj.ContainsKey("translate"))
                             {
-                                this.MOTD = descriptionDataObj["text"].ToString();
-                            }
-                            else if (descriptionDataObj.ContainsKey("translate"))
-                            {
-                                this.MOTD = descriptionDataObj["translate"].ToString();
+                                MOTD += descriptionDataObj["translate"].ToString();
                             }
                         }
                     }
@@ -287,13 +293,13 @@ namespace McPing
                     // Check for forge on the server.
                     if (jsonData.ContainsKey("modinfo") && jsonData["modinfo"].Type == JTokenType.Object)
                     {
-                        JObject modData = (JObject)jsonData["modinfo"];
+                        JObject modData = jsonData["modinfo"] as JObject;
                         if (modData.ContainsKey("type") && modData["type"].ToString() == "FML")
                         {
-                            this.ForgeInfo = new ForgeInfo(modData);
-                            if (!this.ForgeInfo.Mods.Any())
+                            ForgeInfo = new ForgeInfo(modData);
+                            if (!ForgeInfo.Mods.Any())
                             {
-                                this.ForgeInfo = null;
+                                ForgeInfo = null;
                             }
                         }
                     }
@@ -304,11 +310,11 @@ namespace McPing
                         {
                             string datastring = jsonData["favicon"].ToString();
                             byte[] arr = Convert.FromBase64String(datastring.Replace("data:image/png;base64,", ""));
-                            this.IconData = arr;
+                            IconData = arr;
                         }
                         catch
                         {
-                            this.IconData = null;
+                            IconData = null;
                         }
                     }
                 }
