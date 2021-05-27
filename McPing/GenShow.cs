@@ -33,7 +33,7 @@ namespace McPing
             sf = StringFormat.GenericTypographic;
             sf.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
 
-            PicDir = Program.RunLocal + "PicTemp\\";
+            PicDir = Program.RunLocal + "PicTemp/";
             if (!Directory.Exists(PicDir))
             {
                 Directory.CreateDirectory(PicDir);
