@@ -156,11 +156,11 @@ namespace McPing
                 tcp.Client.Send(tosend, SocketFlags.None);
 
                 tcp.Client.Send(request_packet, SocketFlags.None);
-                ProtocolHandler handler = new ProtocolHandler(tcp);
+                ProtocolHandler handler = new(tcp);
                 int packetLength = handler.readNextVarIntRAW();
                 if (packetLength > 0)
                 {
-                    List<byte> packetData = new List<byte>(handler.readDataRAW(packetLength));
+                    List<byte> packetData = new(handler.readDataRAW(packetLength));
                     if (ProtocolHandler.readNextVarInt(packetData) == 0x00) //Read Packet ID
                     {
                         string result = ProtocolHandler.readNextString(packetData); //Get the Json data
@@ -178,7 +178,7 @@ namespace McPing
                 {
                     tcp.ReceiveTimeout = 1000;
 
-                    Stopwatch pingWatcher = new Stopwatch();
+                    Stopwatch pingWatcher = new();
 
                     pingWatcher.Start();
                     tcp.Client.Send(ping_tosend, SocketFlags.None);
@@ -187,7 +187,7 @@ namespace McPing
                     pingWatcher.Stop();
                     if (pingLenghth > 0)
                     {
-                        List<byte> packetData = new List<byte>(handler.readDataRAW(pingLenghth));
+                        List<byte> packetData = new(handler.readDataRAW(pingLenghth));
                         if (ProtocolHandler.readNextVarInt(packetData) == 0x01) //Read Packet ID
                         {
                             long content = ProtocolHandler.readNextByte(packetData); //Get the Json data
@@ -201,8 +201,8 @@ namespace McPing
                 }
                 catch (Exception e)
                 {
-                    Ping = 0;
-                    Program.LogError(e);
+                    Ping = 999;
+                    return true;
                 }
             }
             catch (Exception e)
