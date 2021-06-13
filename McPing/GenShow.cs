@@ -109,8 +109,13 @@ namespace McPing
                         continue;
                     char color = item2.ToLower()[0];
                     string draw = "";
-
-                    if (color == 'k')
+                    if (color == '#')
+                    {
+                        string color1 = item2[..7];
+                        brush = new SolidBrush(ColorTranslator.FromHtml(color1));
+                        draw = item2[7..];
+                    }
+                    else if (color == 'k')
                     {
                         brush = GetBrush(randomString[new Random().Next(randomString.Length - 1)]);
                     }
@@ -327,7 +332,7 @@ namespace McPing
                 case 'f':
                     return Brushes.White;
                 default:
-                    return null;
+                        return null;
             }
         }
     }

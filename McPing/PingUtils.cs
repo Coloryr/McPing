@@ -141,7 +141,7 @@ namespace McPing
                 tcp.ReceiveBufferSize = 1024 * 1024;
 
                 byte[] packet_id = ProtocolHandler.getVarInt(0);
-                byte[] protocol_version = ProtocolHandler.getVarInt(-1);
+                byte[] protocol_version = ProtocolHandler.getVarInt(754);
                 byte[] server_adress_val = Encoding.UTF8.GetBytes(IP);
                 byte[] server_adress_len = ProtocolHandler.getVarInt(server_adress_val.Length);
                 byte[] server_port = BitConverter.GetBytes(Port); 
@@ -266,20 +266,25 @@ namespace McPing
                             }
                             if (descriptionDataObj.ContainsKey("extra"))
                             {
-                                foreach (var item in descriptionDataObj["extra"])
+                                foreach (JObject item in descriptionDataObj["extra"])
                                 {
-                                    string text = item["text"].ToString();
-                                    string color = item["color"]?.ToString();
-                                    color = GetColor(color);
+                                    string text;
+                                    string color;
+                                    if (item["extra"] is JArray array)
+                                        foreach (var item2 in array)
+                                        {
+                                            text = item2["text"].ToString();
+                                            color = item2["color"]?.ToString();
+                                            color = GetColor(color);
+                                            MOTD += color + text;
+                                        }
+                                    text = item["text"].ToString();
                                     if (text.Length != 0)
                                     {
+                                        color = item["color"]?.ToString();
+                                        color = GetColor(color);
                                         MOTD += color + text;
                                     }
-                                    if (item["extra"] is JArray array)
-                                        foreach (var item1 in array)
-                                        {
-                                            MOTD += item1["text"]?.ToString();
-                                        }
                                 }
                             }
 
@@ -359,7 +364,6 @@ namespace McPing
                     return "§d";
                 case "yellow":
                     return "§e";
-                default:
                 case "white":
                     return "§f";
                 case "obfuscated":
@@ -374,6 +378,12 @@ namespace McPing
                     return "§o";
                 case "reset":
                     return "§r";
+                default:
+                    if (color?.StartsWith("#") == true)
+                    {
+                        return "§" + color;
+                    }
+                    return "§f";
             }
         }
     }
