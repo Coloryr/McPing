@@ -202,7 +202,7 @@ namespace McPing
             x += res.Width;
             brush = version_color;
             now = FontState.normal;
-            temp1 = info.GameVersion.Split("§");
+            temp1 = ("r" + info.GameVersion).Split("§");
             foreach (var item2 in temp1)
             {
                 if (item2.Length == 0)
