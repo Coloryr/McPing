@@ -18,10 +18,10 @@ namespace McPing
         {
             if (IP.Contains(":"))
             {
-                var temp = IP.Split(':');
-                if (!ushort.TryParse(temp[1], out var port))
+                var temp = IP.LastIndexOf(':');
+                if (!ushort.TryParse(IP[temp..], out var port))
                     return null;
-                return Get(temp[0], port, cancellationToken).Result;
+                return Get(IP[0..temp], port, cancellationToken).Result;
             }
             return Get(IP, 25565, cancellationToken).Result;
         }

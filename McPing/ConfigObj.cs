@@ -30,5 +30,6 @@ namespace McPing
         public List<long> Group { get; set; }
         public long RunQQ { get; set; }
         public string Head { get; set; }
+        public string DefaultIP { get; set; }
     }
 }
