@@ -18,10 +18,10 @@ namespace McPing
         {
             if (IP.Contains(":"))
             {
-                var temp = IP.LastIndexOf(':');
+                var temp = IP.LastIndexOf(':') + 1;
                 if (!ushort.TryParse(IP[temp..], out var port))
                     return null;
-                return Get(IP[0..temp], port, cancellationToken).Result;
+                return Get(IP[0..(temp - 1)], port, cancellationToken).Result;
             }
             return Get(IP, 25565, cancellationToken).Result;
         }
@@ -216,6 +216,33 @@ namespace McPing
             return false;
         }
 
+        private string Get(JToken obj)
+        {
+            string temp = "";
+            string text;
+            string color;
+            if (obj["extra"] is JArray array)
+                foreach (var item2 in array)
+                {
+                    text = item2["text"].ToString();
+                    color = item2["color"]?.ToString();
+                    color = GetColor(color);
+                    temp += color + text;
+                    if (item2["extra"] != null)
+                    {
+                        temp += Get(item2);
+                    }
+                }
+            text = obj["text"].ToString();
+            if (text.Length != 0)
+            {
+                color = obj["color"]?.ToString();
+                color = GetColor(color);
+                temp += color + text;
+            }
+            return temp;
+        }
+
         private void SetInfoFromJsonText(string JsonText)
         {
             try
@@ -268,23 +295,7 @@ namespace McPing
                             {
                                 foreach (JObject item in descriptionDataObj["extra"])
                                 {
-                                    string text;
-                                    string color;
-                                    if (item["extra"] is JArray array)
-                                        foreach (var item2 in array)
-                                        {
-                                            text = item2["text"].ToString();
-                                            color = item2["color"]?.ToString();
-                                            color = GetColor(color);
-                                            MOTD += color + text;
-                                        }
-                                    text = item["text"].ToString();
-                                    if (text.Length != 0)
-                                    {
-                                        color = item["color"]?.ToString();
-                                        color = GetColor(color);
-                                        MOTD += color + text;
-                                    }
+                                    MOTD += Get(item);
                                 }
                             }
 
@@ -383,7 +394,7 @@ namespace McPing
                     {
                         return "§" + color;
                     }
-                    return "§f";
+                    return "";
             }
         }
     }

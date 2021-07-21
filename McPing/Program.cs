@@ -26,38 +26,37 @@ namespace McPing
                         var message = pack.message[^1].Split(' ');
                         if (message[0] == Config.Head)
                         {
+                            if (have)
+                            {
+                                Task.Run(async () =>
+                                {
+                                    CancellationTokenSource cancel = new();
+                                    var task = Task.Run(() =>
+                                    {
+                                        string local = PingUtils.Get(Config.DefaultIP, cancel.Token);
+                                        if (local == null)
+                                        {
+                                            SendMessageGroup(pack.id, $"获取{Config.DefaultIP}错误");
+                                        }
+                                        else
+                                        {
+                                            SendMessageGroupImg(pack.id, local);
+                                        }
+                                    }, cancel.Token);
+                                    int timeout = 8000;
+                                    if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
+                                    {
+                                        cancel.Cancel(false);
+                                        SendMessageGroup(pack.id, $"获取{Config.DefaultIP}超时");
+                                    }
+
+                                });
+                                break;
+                            }
                             if (message.Length == 1)
                             {
-                                if (have)
-                                {
-                                    Task.Run(async () =>
-                                    {
-                                        CancellationTokenSource cancel = new();
-                                        var task = Task.Run(() =>
-                                        {
-                                            string local = PingUtils.Get(Config.DefaultIP, cancel.Token);
-                                            if (local == null)
-                                            {
-                                                SendMessageGroup(pack.id, $"获取{Config.DefaultIP}错误");
-                                            }
-                                            else
-                                            {
-                                                SendMessageGroupImg(pack.id, local);
-                                            }
-                                        }, cancel.Token);
-                                        int timeout = 8000;
-                                        if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
-                                        {
-                                            cancel.Cancel(false);
-                                            SendMessageGroup(pack.id, $"获取{Config.DefaultIP}超时");
-                                        }
 
-                                    });
-                                }
-                                else
-                                {
-                                    SendMessageGroup(pack.id, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片");
-                                }
+                                SendMessageGroup(pack.id, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片");
                                 break;
                             }
                             var ip = message[1];
@@ -93,18 +92,18 @@ namespace McPing
                                 Task.Run(async () =>
                                 {
                                     CancellationTokenSource cancel = new();
-                                    var task = Task.Run( () =>
-                                    {
-                                        string local = PingUtils.Get(ip, cancel.Token);
-                                        if (local == null)
-                                        {
-                                            SendMessageGroup(pack.id, $"获取{ip}错误");
-                                        }
-                                        else
-                                        {
-                                            SendMessageGroupImg(pack.id, local);
-                                        }
-                                    }, cancel.Token);
+                                    var task = Task.Run(() =>
+                                   {
+                                       string local = PingUtils.Get(ip, cancel.Token);
+                                       if (local == null)
+                                       {
+                                           SendMessageGroup(pack.id, $"获取{ip}错误");
+                                       }
+                                       else
+                                       {
+                                           SendMessageGroupImg(pack.id, local);
+                                       }
+                                   }, cancel.Token);
                                     int timeout = 8000;
                                     if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
                                     {
