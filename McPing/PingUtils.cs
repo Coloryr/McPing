@@ -69,7 +69,7 @@ namespace McPing
                 return null;
             }
             ServerInfo info = new();
-            if (info.StartGetServerInfo(tcp, IP, Port, origin))
+            if (info.StartGetServerInfo(tcp, IP, Port, origin, cancellationToken))
             {
                 return GenShow.Gen(info);
             }
@@ -133,7 +133,7 @@ namespace McPing
         /// 获取与特定格式代码相关联的颜色代码
         /// </summary>
 
-        public bool StartGetServerInfo(TcpClient tcp, string IP, ushort Port, string orgin)
+        public bool StartGetServerInfo(TcpClient tcp, string IP, ushort Port, string orgin, CancellationToken cancellationToken)
         {
             try
             {
@@ -156,11 +156,15 @@ namespace McPing
                 tcp.Client.Send(tosend, SocketFlags.None);
 
                 tcp.Client.Send(request_packet, SocketFlags.None);
+                if (cancellationToken.IsCancellationRequested)
+                    return false;
                 ProtocolHandler handler = new(tcp);
                 int packetLength = handler.readNextVarIntRAW();
                 if (packetLength > 0)
                 {
                     List<byte> packetData = new(handler.readDataRAW(packetLength));
+                    if (cancellationToken.IsCancellationRequested)
+                        return false;
                     if (ProtocolHandler.readNextVarInt(packetData) == 0x00) //Read Packet ID
                     {
                         string result = ProtocolHandler.readNextString(packetData); //Get the Json data

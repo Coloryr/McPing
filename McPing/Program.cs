@@ -8,6 +8,7 @@ namespace McPing
 {
     class Program
     {
+        public const string Version = "1.0.1";
         public static string RunLocal { get; private set; }
         public static ConfigObj Config { get; private set; }
 

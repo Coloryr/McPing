@@ -97,66 +97,78 @@ namespace McPing
             Brush brush;
             FontState now;
             string[] temp1;
+            bool isStart;
             foreach (var item in temp)
             {
                 x = 80;
                 brush = Brushes.White;
                 now = FontState.normal;
                 temp1 = item.Split("§");
+                if (item.StartsWith("§"))
+                    isStart = true;
                 foreach (var item2 in temp1)
                 {
+                    
                     if (item2.Length == 0)
                         continue;
-                    char color = item2.ToLower()[0];
                     string draw = "";
-                    if (color == '#')
+                    if (!isStart)
                     {
-                        string color1 = item2[..7];
-                        brush = new SolidBrush(ColorTranslator.FromHtml(color1));
-                        draw = item2[7..];
-                    }
-                    else if (color == 'k')
-                    {
-                        brush = GetBrush(randomString[new Random().Next(randomString.Length - 1)]);
-                    }
-                    else if (color == 'l')
-                    {
-                        now = FontState.bold;
-                        draw = item2[1..];
-                    }
-                    else if (color == 'm')
-                    {
-                        now = FontState.strikethrough;
-                        draw = item2[1..];
-                    }
-                    else if (color == 'n')
-                    {
-                        now = FontState.underline;
-                        draw = item2[1..];
-                    }
-                    else if (color == 'o')
-                    {
-                        now = FontState.italic;
-                        draw = item2[1..];
-                    }
-                    else if (color == 'r')
-                    {
-                        now = FontState.normal;
-                        brush = Brushes.White;
-                        draw = item2[1..];
-                    }
-                    else
-                    {
-                        var temp2 = GetBrush(color);
-                        if (temp2 == null)
+                        char color = item2.ToLower()[0];
+                        if (color == '#')
                         {
-                            draw = item2;
+                            string color1 = item2[..7];
+                            brush = new SolidBrush(ColorTranslator.FromHtml(color1));
+                            draw = item2[7..];
+                        }
+                        else if (color == 'k')
+                        {
+                            brush = GetBrush(randomString[new Random().Next(randomString.Length - 1)]);
+                        }
+                        else if (color == 'l')
+                        {
+                            now = FontState.bold;
+                            draw = item2[1..];
+                        }
+                        else if (color == 'm')
+                        {
+                            now = FontState.strikethrough;
+                            draw = item2[1..];
+                        }
+                        else if (color == 'n')
+                        {
+                            now = FontState.underline;
+                            draw = item2[1..];
+                        }
+                        else if (color == 'o')
+                        {
+                            now = FontState.italic;
+                            draw = item2[1..];
+                        }
+                        else if (color == 'r')
+                        {
+                            now = FontState.normal;
+                            brush = Brushes.White;
+                            draw = item2[1..];
                         }
                         else
                         {
-                            brush = temp2;
-                            draw = item2[1..];
+                            var temp2 = GetBrush(color);
+                            if (temp2 == null)
+                            {
+                                draw = item2;
+                            }
+                            else
+                            {
+                                brush = temp2;
+                                draw = item2[1..];
+                            }
                         }
+                    }
+                    else
+                    {
+                        draw = item2;
+                        isStart = false;
                     }
                     if (draw.Length == 0)
                         continue;
