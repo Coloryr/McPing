@@ -15,5 +15,7 @@ dotnet McPing.dll
 修改`config.json`中的`RunQQ`(运行的QQ号)、`Group`(运行的群)  
 重启程序
 
+**Linux不会用就不要用Linux**
+
 ## 修订
 1.0.1: 可能吞字的问题
