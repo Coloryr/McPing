@@ -5,7 +5,13 @@
 
 ## 启动
 下载压缩包，解压到一个地方  
-运行`McPing.exe`生成默认配置  
+Windows双击运行`McPing.exe`生成默认配置  
+Linux  
+先安装dotnet
+然后输入
+```
+dotnet McPing.dll
+```
 修改`config.json`中的`RunQQ`(运行的QQ号)、`Group`(运行的群)  
 重启程序
 
