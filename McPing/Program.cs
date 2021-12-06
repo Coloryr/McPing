@@ -8,7 +8,7 @@ namespace McPing
 {
     class Program
     {
-        public const string Version = "1.0.1";
+        public const string Version = "1.1.0";
         public static string RunLocal { get; private set; }
         public static ConfigObj Config { get; private set; }
 
@@ -155,7 +155,11 @@ namespace McPing
 
             have = !string.IsNullOrWhiteSpace(Config.DefaultIP);
 
-            GenShow.Init();
+            if (!GenShow.Init())
+            {
+                LogError("初始化错误");
+                return;
+            }
 
             RobotConfig config = new()
             {
@@ -190,7 +194,7 @@ namespace McPing
                 {
                     if (arg.Length < 2)
                     {
-                        LogOut("错误的参数");
+                        LogError("错误的参数");
                         continue;
                     }
                     string res = null;

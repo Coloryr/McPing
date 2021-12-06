@@ -49,7 +49,7 @@ namespace McPing
                 }
                 origin = IP;
                 var res = new Resolver().Query("_minecraft._tcp." + IP, QType.SRV);
-                res.Wait(cancellationToken);
+                await res.WaitAsync(cancellationToken);
                 if (res.Result?.Answers?.FirstOrDefault()?.RECORD is RecordSRV result)
                 {
                     if (cancellationToken.IsCancellationRequested)

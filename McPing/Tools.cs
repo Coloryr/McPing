@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace McPing
 {
     class Tools
     {
-        public static Bitmap ZoomImage(Bitmap bitmap, int destHeight, int destWidth)
+        public static Image ZoomImage(Image bitmap, int destHeight, int destWidth)
         {
             try
             {
@@ -36,17 +34,11 @@ namespace McPing
                     width = sourWidth;
                     height = sourHeight;
                 }
-                Bitmap destBitmap = new(width, height);
-                Graphics g = Graphics.FromImage(destBitmap);
-                g.Clear(Color.Transparent);
-                //设置画布的描绘质量           
-                g.CompositingQuality = CompositingQuality.HighQuality;
-                g.SmoothingMode = SmoothingMode.HighQuality;
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.DrawImage(bitmap, new Rectangle(0, 0, width, height), 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel);
-                g.Dispose();
-                bitmap.Dispose();
-                return destBitmap;
+                bitmap.Mutate((a) =>
+                {
+                    a.Resize(width, height);
+                });
+                return bitmap;
             }
             catch
             {

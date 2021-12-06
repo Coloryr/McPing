@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Text;
 using System.IO;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace McPing
 {
@@ -15,50 +14,48 @@ namespace McPing
         private const string PicName = "PicTemp";
         private static string PicDir;
 
-        private static StringFormat sf;
-
         private static Font font_normal;
         private static Font font_bold;
         private static Font font_italic;
         private static Font font_underline;
         private static Font font_strikethrough;
         private static Color bg_color;
-        private static Brush good_ping_color;
-        private static Brush bad_ping_color;
-        private static Brush player_color;
-        private static Brush version_color;
+        private static Color good_ping_color;
+        private static Color bad_ping_color;
+        private static Color player_color;
+        private static Color version_color;
 
-        public static void Init()
+        private const int size = 17;
+
+        public static bool Init()
         {
-            sf = StringFormat.GenericTypographic;
-            sf.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
 
             PicDir = Program.RunLocal + "PicTemp/";
             if (!Directory.Exists(PicDir))
             {
                 Directory.CreateDirectory(PicDir);
             }
-            font_normal?.Dispose();
-            font_bold?.Dispose();
-            font_italic?.Dispose();
-            font_underline?.Dispose();
-            font_strikethrough?.Dispose();
-            good_ping_color?.Dispose();
-            bad_ping_color?.Dispose();
-            player_color?.Dispose();
-            version_color?.Dispose();
 
-            font_normal = new Font(Program.Config.Show.Font, 13);
-            font_bold = new Font(Program.Config.Show.Font, 13, FontStyle.Bold);
-            font_italic = new Font(Program.Config.Show.Font, 13, FontStyle.Italic);
-            font_underline = new Font(Program.Config.Show.Font, 13, FontStyle.Underline);
-            font_strikethrough = new Font(Program.Config.Show.Font, 13, FontStyle.Strikeout);
+            FontFamily fontFamily = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font).FirstOrDefault();
+            if (fontFamily == null)
+            {
+                Program.LogError($"找不到字体{Program.Config.Show.Font}");
+                return false;
+            }
 
-            bg_color = ColorTranslator.FromHtml(Program.Config.Show.BGColor);
-            good_ping_color = new SolidBrush(ColorTranslator.FromHtml(Program.Config.Show.GoodPingColor));
-            bad_ping_color = new SolidBrush(ColorTranslator.FromHtml(Program.Config.Show.BadPingColor));
-            player_color = new SolidBrush(ColorTranslator.FromHtml(Program.Config.Show.PlayerColor));
-            version_color = new SolidBrush(ColorTranslator.FromHtml(Program.Config.Show.VersionColor));
+            font_normal = fontFamily.CreateFont(size);
+            font_bold = fontFamily.CreateFont(size, FontStyle.Bold);
+            font_italic = fontFamily.CreateFont(size, FontStyle.Italic);
+            font_underline = fontFamily.CreateFont(size);
+            font_strikethrough = fontFamily.CreateFont(size);
+
+            bg_color = Color.Parse(Program.Config.Show.BGColor);
+            good_ping_color = Color.Parse(Program.Config.Show.GoodPingColor);
+            bad_ping_color = Color.Parse(Program.Config.Show.BadPingColor);
+            player_color = Color.Parse(Program.Config.Show.PlayerColor);
+            version_color = Color.Parse(Program.Config.Show.VersionColor);
+
+            return true;
         }
 
         enum FontState
@@ -68,40 +65,56 @@ namespace McPing
         private const string randomString = "0123456789abcdef";
         public static string Gen(ServerInfo info)
         {
-            using Bitmap bitmap = new Bitmap(660, 86);
-            using Graphics graphics = Graphics.FromImage(bitmap);
-            graphics.InterpolationMode = InterpolationMode.High;
-            graphics.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
-            graphics.Clear(bg_color);
-            Bitmap bitmap1;
+            var textOptions = new TextOptions()
+            {
+                ApplyKerning = true,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+
+            var graphicsOptions = new GraphicsOptions()
+            {
+                Antialias = true,
+                AntialiasSubpixelDepth = 256
+            };
+
+            Image img = new Image<Rgba32>(660, 84);
+            img.Mutate((operation)=> 
+            {
+                operation.SetGraphicsOptions(graphicsOptions);
+                operation.Clear(bg_color);
+            });
+            Image bitmap1;
             if (info.IconData == null)
             {
-                bitmap1 = new(64, 64);
+                bitmap1 = new Image<Rgba32>(64, 64);
             }
             else
             {
-
-                using MemoryStream stream = new MemoryStream();
+                using MemoryStream stream = new();
                 stream.Write(info.IconData);
                 stream.Seek(0, SeekOrigin.Begin);
-                bitmap1 = Image.FromStream(stream) as Bitmap;
+                bitmap1 = Image.Load(stream);
                 bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
             }
-            graphics.DrawImage(bitmap1, 10, 10);
+            img.Mutate((operation) => {
+                operation.SetGraphicsOptions(graphicsOptions);
+                operation.DrawImage(bitmap1, new Point(10, 10), 1);
+            });
             bitmap1.Dispose();
 
             var temp = info.MOTD.Split('\n');
             float y = 10;
             float x = 80;
-            SizeF res;
-            Brush brush;
+            FontRectangle res;
+            Color brush;
             FontState now;
             string[] temp1;
             bool isStart = false;
             foreach (var item in temp)
             {
                 x = 80;
-                brush = Brushes.White;
+                brush = Color.White;
                 now = FontState.normal;
                 temp1 = item.Split("§");
                 if (item.StartsWith("§"))
@@ -115,7 +128,7 @@ namespace McPing
                     if (color == '#')
                     {
                         string color1 = item2[..7];
-                        brush = new SolidBrush(ColorTranslator.FromHtml(color1));
+                        brush = Color.Parse(color1);
                         draw = item2[7..];
                     }
                     else if (isStart && color is 'k' or 'l' or 'm' or 'n' or 'o' or 'r')
@@ -125,7 +138,7 @@ namespace McPing
                     }
                     else if (color == 'k')
                     {
-                        brush = GetBrush(randomString[new Random().Next(randomString.Length - 1)]);
+                        GetBrush(randomString[new Random().Next(randomString.Length - 1)], out brush);
                     }
                     else if (color == 'l')
                     {
@@ -150,13 +163,12 @@ namespace McPing
                     else if (color == 'r')
                     {
                         now = FontState.normal;
-                        brush = Brushes.White;
+                        brush = Color.White;
                         draw = item2[1..];
                     }
                     else
                     {
-                        var temp2 = GetBrush(color);
-                        if (temp2 == null)
+                        if (!GetBrush(color, out var temp2))
                         {
                             draw = item2;
                         }
@@ -172,24 +184,46 @@ namespace McPing
                     {
                         default:
                         case FontState.normal:
-                            res = graphics.MeasureString(draw, font_normal, PointF.Empty, sf);
-                            graphics.DrawString(draw, font_normal, brush, x, y);
+                            res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
+                            img.Mutate((a) =>
+                            {
+                                a.SetGraphicsOptions(graphicsOptions);
+                                a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                            });
                             break;
                         case FontState.bold:
-                            res = graphics.MeasureString(draw, font_bold, PointF.Empty, sf);
-                            graphics.DrawString(draw, font_bold, brush, x, y);
+                            res = TextMeasurer.Measure(draw, new RendererOptions(font_bold));
+                            img.Mutate((a) =>
+                            {
+                                a.SetGraphicsOptions(graphicsOptions);
+                                a.DrawText(draw, font_bold, brush, new PointF(x, y));
+                            });
                             break;
                         case FontState.strikethrough:
-                            res = graphics.MeasureString(draw, font_strikethrough, PointF.Empty, sf);
-                            graphics.DrawString(draw, font_strikethrough, brush, x, y);
+                            res = TextMeasurer.Measure(draw, new RendererOptions(font_strikethrough));
+                            img.Mutate((a) =>
+                            {
+                                a.SetGraphicsOptions(graphicsOptions);
+                                a.DrawText(draw, font_strikethrough, brush, new PointF(x, y));
+                                a.DrawLines(brush, 1, new PointF(x, y + 6.5f), new PointF(x + res.Width, y + 6.5f));
+                            });
                             break;
                         case FontState.underline:
-                            res = graphics.MeasureString(draw, font_underline, PointF.Empty, sf);
-                            graphics.DrawString(draw, font_underline, brush, x, y);
+                            res = TextMeasurer.Measure(draw, new RendererOptions(font_underline));
+                            img.Mutate((a) =>
+                            {
+                                a.SetGraphicsOptions(graphicsOptions);
+                                a.DrawText(draw, font_underline, brush, new PointF(x, y));
+                                a.DrawLines(brush, 1, new PointF(x, y + 13f), new PointF(x + res.Width, y + 13f));
+                            });
                             break;
                         case FontState.italic:
-                            res = graphics.MeasureString(draw, font_italic, PointF.Empty, sf);
-                            graphics.DrawString(draw, font_italic, brush, x, y);
+                            res = TextMeasurer.Measure(draw, new RendererOptions(font_italic));
+                            img.Mutate((a) =>
+                            {
+                                a.SetGraphicsOptions(graphicsOptions);
+                                a.DrawText(draw, font_italic, brush, new PointF(x, y));
+                            });
                             break;
                     }
                     x += res.Width;
@@ -201,13 +235,21 @@ namespace McPing
             y = 50;
             x = 80;
             string data = $"在线人数:{info.CurrentPlayerCount}/{info.MaxPlayerCount}";
-            res = graphics.MeasureString(data, font_italic);
-            graphics.DrawString(data, font_normal, player_color, x, y);
-            x += res.Width;
+            res = TextMeasurer.Measure(data, new RendererOptions(font_italic));
+            img.Mutate((a) =>
+            {
+                a.SetGraphicsOptions(graphicsOptions);
+                a.DrawText(data, font_normal, player_color, new PointF(x, y));
+            });
+            x += res.Width + 10f;
             data = $"服务器版本:";
-            res = graphics.MeasureString(data, font_italic);
-            graphics.DrawString(data, font_normal, version_color, x, y);
-            x += res.Width;
+            res = TextMeasurer.Measure(data, new RendererOptions(font_italic));
+            img.Mutate((a) =>
+            {
+                a.SetGraphicsOptions(graphicsOptions);
+                a.DrawText(data, font_normal, version_color, new PointF(x, y));
+            });
+            x += res.Width + 10f;
             brush = version_color;
             now = FontState.normal;
             temp1 = ("r" + info.GameVersion).Split("§");
@@ -220,7 +262,7 @@ namespace McPing
 
                 if (color == 'k')
                 {
-                    brush = GetBrush(randomString[new Random().Next(randomString.Length - 1)]);
+                    GetBrush(randomString[new Random().Next(randomString.Length - 1)], out brush);
                 }
                 else if (color == 'l')
                 {
@@ -245,13 +287,12 @@ namespace McPing
                 else if (color == 'r')
                 {
                     now = FontState.normal;
-                    brush = Brushes.White;
+                    brush = Color.White;
                     draw = item2[1..];
                 }
                 else
                 {
-                    var temp2 = GetBrush(color);
-                    if (temp2 == null)
+                    if (!GetBrush(color, out var temp2))
                     {
                         draw = item2;
                     }
@@ -267,80 +308,146 @@ namespace McPing
                 {
                     default:
                     case FontState.normal:
-                        res = graphics.MeasureString(draw, font_normal, PointF.Empty, sf);
-                        graphics.DrawString(draw, font_normal, brush, x, y);
+                        res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
+                        img.Mutate((a) =>
+                        {
+                            a.SetGraphicsOptions(graphicsOptions);
+                            a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                        });
                         break;
                     case FontState.bold:
-                        res = graphics.MeasureString(draw, font_bold, PointF.Empty, sf);
-                        graphics.DrawString(draw, font_bold, brush, x, y);
+                        res = TextMeasurer.Measure(draw, new RendererOptions(font_bold));
+                        img.Mutate((a) =>
+                        {
+                            a.SetGraphicsOptions(graphicsOptions);
+                            a.DrawText(draw, font_bold, brush, new PointF(x, y));
+                        });
                         break;
+                        //删除线
                     case FontState.strikethrough:
-                        res = graphics.MeasureString(draw, font_strikethrough, PointF.Empty, sf);
-                        graphics.DrawString(draw, font_strikethrough, brush, x, y);
+                        res = TextMeasurer.Measure(draw, new RendererOptions(font_strikethrough));
+                        img.Mutate((a) =>
+                        {
+                            a.SetGraphicsOptions(graphicsOptions);
+                            a.DrawText(draw, font_strikethrough, brush, new PointF(x, y));
+                            a.DrawLines(brush, 1, new PointF(x, y + 6.5f), new PointF(x + res.Width, y + 6.5f));
+                        });
                         break;
+                        //下划线
                     case FontState.underline:
-                        res = graphics.MeasureString(draw, font_underline, PointF.Empty, sf);
-                        graphics.DrawString(draw, font_underline, brush, x, y);
+                        res = TextMeasurer.Measure(draw, new RendererOptions(font_underline));
+                        img.Mutate((a) =>
+                        {
+                            a.SetGraphicsOptions(graphicsOptions);
+                            a.DrawText(draw, font_underline, brush, new PointF(x, y));
+                            a.DrawLines(brush, 1, new PointF(x, y + 13f), new PointF(x + res.Width, y + 13f));
+                        });
                         break;
                     case FontState.italic:
-                        res = graphics.MeasureString(draw, font_italic, PointF.Empty, sf);
-                        graphics.DrawString(draw, font_italic, brush, x, y);
+                        res = TextMeasurer.Measure(draw, new RendererOptions(font_italic));
+                        img.Mutate((a) =>
+                        {
+                            a.SetGraphicsOptions(graphicsOptions);
+                            a.DrawText(draw, font_italic, brush, new PointF(x, y));
+                        });
                         break;
                 }
                 x += res.Width;
                 if (x > 580)
                 {
-                    graphics.DrawString("...", font_normal, version_color, x, y);
+                    img.Mutate((a) =>
+                    {
+                        a.SetGraphicsOptions(graphicsOptions);
+                        a.DrawText("...", font_normal, version_color, new PointF(x, y));
+                    });
                 }
             }
 
-            graphics.DrawString($"Ping", font_normal, good_ping_color, 600, 10);
-            graphics.DrawString($"{info.Ping}", font_normal, info.Ping > 100 ? bad_ping_color : good_ping_color, 600, 30);
+            img.Mutate((a) =>
+            {
+                a.SetGraphicsOptions(graphicsOptions);
+                a.DrawText("Ping", font_normal, good_ping_color, new PointF(600, 10));
+                a.DrawText($"{info.Ping}", font_normal, info.Ping > 100 ? bad_ping_color : good_ping_color, new PointF(600, 30));
+            });
 
-            string local = PicDir + info.IP + ".jpg";
-            bitmap.Save(local);
+            string local = PicDir + info.IP + ".png";
+            img.SaveAsPng(local);
             Program.LogOut("生成图片" + local);
             return local;
         }
 
-        private static Brush GetBrush(char color)
+        private static Color C0 = Color.Parse("#000000");
+        private static Color C1 = Color.Parse("#0000AA");
+        private static Color C2 = Color.Parse("#00AA00");
+        private static Color C3 = Color.Parse("#00AAAA");
+        private static Color C4 = Color.Parse("#AA0000");
+        private static Color C5 = Color.Parse("#AA00AA");
+        private static Color C6 = Color.Parse("#FFAA00");
+        private static Color C7 = Color.Parse("#AAAAAA");
+        private static Color C8 = Color.Parse("#555555");
+        private static Color C9 = Color.Parse("#5555FF");
+        private static Color Ca = Color.Parse("#55FF55");
+        private static Color Cb = Color.Parse("#55FFFF");
+        private static Color Cc = Color.Parse("#FF5555");
+        private static Color Cd = Color.Parse("#FF55FF");
+        private static Color Ce = Color.Parse("#FFFF55");
+        private static Color Cf = Color.Parse("#FFFFFF");
+
+        private static bool GetBrush(char color, out Color color1)
         {
             switch (color)
             {
                 case '0':
-                    return Brushes.Black;
+                    color1 = C0;
+                    return true;
                 case '1':
-                    return Brushes.MediumBlue;
+                    color1 = C1;
+                    return true;
                 case '2':
-                    return Brushes.LimeGreen;
+                    color1 = C2;
+                    return true;
                 case '3':
-                    return Brushes.DarkTurquoise;
+                    color1 = C3;
+                    return true;
                 case '4':
-                    return Brushes.Firebrick;
+                    color1 = C4;
+                    return true;
                 case '5':
-                    return Brushes.DarkOrange;
+                    color1 = C5;
+                    return true;
                 case '6':
-                    return Brushes.Goldenrod;
+                    color1 = C6;
+                    return true;
                 case '7':
-                    return Brushes.Gainsboro;
+                    color1 = C7;
+                    return true;
                 case '8':
-                    return Brushes.DimGray;
+                    color1 = C8;
+                    return true;
                 case '9':
-                    return Brushes.RoyalBlue;
+                    color1 = C9;
+                    return true;
                 case 'a':
-                    return Brushes.Lime;
+                    color1 = Ca;
+                    return true;
                 case 'b':
-                    return Brushes.Aqua;
+                    color1 = Cb;
+                    return true;
                 case 'c':
-                    return Brushes.Tomato;
+                    color1 = Cc;
+                    return true;
                 case 'd':
-                    return Brushes.Magenta;
+                    color1 = Cd;
+                    return true;
                 case 'e':
-                    return Brushes.Yellow;
+                    color1 = Ce;
+                    return true;
                 case 'f':
-                    return Brushes.White;
+                    color1 = Cf;
+                    return true;
                 default:
-                        return null;
+                    color1 = Cf;
+                    return false;
             }
         }
     }
