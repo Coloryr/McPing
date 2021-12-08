@@ -225,10 +225,29 @@ namespace McPing
             string temp = "";
             string text;
             string color;
+            JObject obj1 = obj as JObject;
+            if (obj1?.ContainsKey("strikethrough") == true)
+            {
+                var strikethrough = (bool)obj1["strikethrough"];
+                temp += strikethrough ? GetColor("strikethrough") : "";
+            }
+
+            if (obj1?.ContainsKey("underlined") == true)
+            {
+                var underlined = (bool)obj1["underlined"];
+                temp += underlined ? GetColor("underline") : "";
+            }
+
+            if (obj1?.ContainsKey("italic") == true)
+            {
+                var italic = (bool)obj1["italic"];
+                temp += italic ? GetColor("italic") : "";
+            }
             if (obj["extra"] is JArray array)
                 foreach (var item2 in array)
                 {
                     text = item2["text"].ToString();
+
                     color = item2["color"]?.ToString();
                     color = GetColor(color);
                     temp += color + text;

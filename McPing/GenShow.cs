@@ -17,8 +17,6 @@ namespace McPing
         private static Font font_normal;
         private static Font font_bold;
         private static Font font_italic;
-        private static Font font_underline;
-        private static Font font_strikethrough;
         private static Color bg_color;
         private static Color good_ping_color;
         private static Color bad_ping_color;
@@ -26,6 +24,8 @@ namespace McPing
         private static Color version_color;
 
         private const int size = 17;
+
+        private static FontFamily fontFamily1;
 
         public static bool Init()
         {
@@ -43,11 +43,11 @@ namespace McPing
                 return false;
             }
 
+            fontFamily1 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font1).FirstOrDefault();
+
             font_normal = fontFamily.CreateFont(size);
             font_bold = fontFamily.CreateFont(size, FontStyle.Bold);
             font_italic = fontFamily.CreateFont(size, FontStyle.Italic);
-            font_underline = fontFamily.CreateFont(size);
-            font_strikethrough = fontFamily.CreateFont(size);
 
             bg_color = Color.Parse(Program.Config.Show.BGColor);
             good_ping_color = Color.Parse(Program.Config.Show.GoodPingColor);
@@ -65,12 +65,10 @@ namespace McPing
         private const string randomString = "0123456789abcdef";
         public static string Gen(ServerInfo info)
         {
-            var textOptions = new TextOptions()
-            {
-                ApplyKerning = true,
-                VerticalAlignment = VerticalAlignment.Top,
-                HorizontalAlignment = HorizontalAlignment.Left
-            };
+            var textOptions = new TextOptions();
+
+            if(fontFamily1!=null)
+                textOptions.FallbackFonts.Add(fontFamily1);
 
             var graphicsOptions = new GraphicsOptions()
             {
@@ -97,7 +95,8 @@ namespace McPing
                 bitmap1 = Image.Load(stream);
                 bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
             }
-            img.Mutate((operation) => {
+            img.Mutate((operation) => 
+            {
                 operation.SetGraphicsOptions(graphicsOptions);
                 operation.DrawImage(bitmap1, new Point(10, 10), 1);
             });
@@ -125,16 +124,17 @@ namespace McPing
                         continue;
                     string draw = "";
                     char color = item2.ToLower()[0];
-                    if (color == '#')
+                    
+                    if (!isStart)
+                    {
+                        draw = item2;
+                        isStart = true;
+                    }
+                    else if (color == '#')
                     {
                         string color1 = item2[..7];
                         brush = Color.Parse(color1);
                         draw = item2[7..];
-                    }
-                    else if (isStart && color is 'k' or 'l' or 'm' or 'n' or 'o' or 'r')
-                    {
-                        draw = item2;
-                        isStart = false;
                     }
                     else if (color == 'k')
                     {
@@ -178,8 +178,14 @@ namespace McPing
                             draw = item2[1..];
                         }
                     }
+
+                    isStart = true;
+
                     if (draw.Length == 0)
+                    {
                         continue;
+                    }
+                        
                     switch (now)
                     {
                         default:
@@ -187,6 +193,7 @@ namespace McPing
                             res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
                             img.Mutate((a) =>
                             {
+                                a.SetTextOptions(textOptions);
                                 a.SetGraphicsOptions(graphicsOptions);
                                 a.DrawText(draw, font_normal, brush, new PointF(x, y));
                             });
@@ -195,32 +202,36 @@ namespace McPing
                             res = TextMeasurer.Measure(draw, new RendererOptions(font_bold));
                             img.Mutate((a) =>
                             {
+                                a.SetTextOptions(textOptions);
                                 a.SetGraphicsOptions(graphicsOptions);
                                 a.DrawText(draw, font_bold, brush, new PointF(x, y));
                             });
                             break;
                         case FontState.strikethrough:
-                            res = TextMeasurer.Measure(draw, new RendererOptions(font_strikethrough));
+                            res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
                             img.Mutate((a) =>
                             {
+                                a.SetTextOptions(textOptions);
                                 a.SetGraphicsOptions(graphicsOptions);
-                                a.DrawText(draw, font_strikethrough, brush, new PointF(x, y));
-                                a.DrawLines(brush, 1, new PointF(x, y + 6.5f), new PointF(x + res.Width, y + 6.5f));
+                                a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                                a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f));
                             });
                             break;
                         case FontState.underline:
-                            res = TextMeasurer.Measure(draw, new RendererOptions(font_underline));
+                            res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
                             img.Mutate((a) =>
                             {
+                                a.SetTextOptions(textOptions);
                                 a.SetGraphicsOptions(graphicsOptions);
-                                a.DrawText(draw, font_underline, brush, new PointF(x, y));
-                                a.DrawLines(brush, 1, new PointF(x, y + 13f), new PointF(x + res.Width, y + 13f));
+                                a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                                a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f));
                             });
                             break;
                         case FontState.italic:
                             res = TextMeasurer.Measure(draw, new RendererOptions(font_italic));
                             img.Mutate((a) =>
                             {
+                                a.SetTextOptions(textOptions);
                                 a.SetGraphicsOptions(graphicsOptions);
                                 a.DrawText(draw, font_italic, brush, new PointF(x, y));
                             });
@@ -238,6 +249,7 @@ namespace McPing
             res = TextMeasurer.Measure(data, new RendererOptions(font_italic));
             img.Mutate((a) =>
             {
+                a.SetTextOptions(textOptions);
                 a.SetGraphicsOptions(graphicsOptions);
                 a.DrawText(data, font_normal, player_color, new PointF(x, y));
             });
@@ -246,6 +258,7 @@ namespace McPing
             res = TextMeasurer.Measure(data, new RendererOptions(font_italic));
             img.Mutate((a) =>
             {
+                a.SetTextOptions(textOptions);
                 a.SetGraphicsOptions(graphicsOptions);
                 a.DrawText(data, font_normal, version_color, new PointF(x, y));
             });
@@ -253,6 +266,8 @@ namespace McPing
             brush = version_color;
             now = FontState.normal;
             temp1 = ("r" + info.GameVersion).Split("§");
+            if (info.GameVersion.StartsWith("§"))
+                isStart = true;
             foreach (var item2 in temp1)
             {
                 if (item2.Length == 0)
@@ -260,7 +275,12 @@ namespace McPing
                 char color = item2.ToLower()[0];
                 string draw = "";
 
-                if (color == 'k')
+                if (!isStart)
+                {
+                    draw = item2;
+                    isStart = true;
+                }
+                else if (color == 'k')
                 {
                     GetBrush(randomString[new Random().Next(randomString.Length - 1)], out brush);
                 }
@@ -302,8 +322,13 @@ namespace McPing
                         draw = item2[1..];
                     }
                 }
+                isStart = true;
+
                 if (draw.Length == 0)
+                {
                     continue;
+                }
+
                 switch (now)
                 {
                     default:
@@ -311,6 +336,7 @@ namespace McPing
                         res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
                         img.Mutate((a) =>
                         {
+                            a.SetTextOptions(textOptions);
                             a.SetGraphicsOptions(graphicsOptions);
                             a.DrawText(draw, font_normal, brush, new PointF(x, y));
                         });
@@ -319,34 +345,36 @@ namespace McPing
                         res = TextMeasurer.Measure(draw, new RendererOptions(font_bold));
                         img.Mutate((a) =>
                         {
+                            a.SetTextOptions(textOptions);
                             a.SetGraphicsOptions(graphicsOptions);
                             a.DrawText(draw, font_bold, brush, new PointF(x, y));
                         });
                         break;
-                        //删除线
                     case FontState.strikethrough:
-                        res = TextMeasurer.Measure(draw, new RendererOptions(font_strikethrough));
+                        res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
                         img.Mutate((a) =>
                         {
+                            a.SetTextOptions(textOptions);
                             a.SetGraphicsOptions(graphicsOptions);
-                            a.DrawText(draw, font_strikethrough, brush, new PointF(x, y));
-                            a.DrawLines(brush, 1, new PointF(x, y + 6.5f), new PointF(x + res.Width, y + 6.5f));
+                            a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                            a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f));
                         });
                         break;
-                        //下划线
                     case FontState.underline:
-                        res = TextMeasurer.Measure(draw, new RendererOptions(font_underline));
+                        res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
                         img.Mutate((a) =>
                         {
+                            a.SetTextOptions(textOptions);
                             a.SetGraphicsOptions(graphicsOptions);
-                            a.DrawText(draw, font_underline, brush, new PointF(x, y));
-                            a.DrawLines(brush, 1, new PointF(x, y + 13f), new PointF(x + res.Width, y + 13f));
+                            a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                            a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f));
                         });
                         break;
                     case FontState.italic:
                         res = TextMeasurer.Measure(draw, new RendererOptions(font_italic));
                         img.Mutate((a) =>
                         {
+                            a.SetTextOptions(textOptions);
                             a.SetGraphicsOptions(graphicsOptions);
                             a.DrawText(draw, font_italic, brush, new PointF(x, y));
                         });
@@ -357,6 +385,7 @@ namespace McPing
                 {
                     img.Mutate((a) =>
                     {
+                        a.SetTextOptions(textOptions);
                         a.SetGraphicsOptions(graphicsOptions);
                         a.DrawText("...", font_normal, version_color, new PointF(x, y));
                     });
@@ -365,6 +394,7 @@ namespace McPing
 
             img.Mutate((a) =>
             {
+                a.SetTextOptions(textOptions);
                 a.SetGraphicsOptions(graphicsOptions);
                 a.DrawText("Ping", font_normal, good_ping_color, new PointF(600, 10));
                 a.DrawText($"{info.Ping}", font_normal, info.Ping > 100 ? bad_ping_color : good_ping_color, new PointF(600, 30));
