@@ -12,8 +12,9 @@
   <ItemGroup>
     <PackageReference Include="Heijden.Dns.Portable" Version="2.0.19" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta13" />
+    <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta15.24" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.0.0-alpha.0.127" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta13.16" />
   </ItemGroup>
 
 </Project>

@@ -142,7 +142,7 @@ namespace McPing
                 RunQQ = 0,
                 Show = new ShowObj()
                 {
-                    Font = "微软雅黑",
+                    Font = "Microsoft YaHei",
                     Font1 = "Segoe UI Emoji",
                     BGColor = "#1C1C1C",
                     GoodPingColor = "#7CFC00",

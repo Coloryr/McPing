@@ -6,6 +6,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace McPing
 {
@@ -17,6 +18,11 @@ namespace McPing
         private static Font font_normal;
         private static Font font_bold;
         private static Font font_italic;
+
+        private static TextOptions font_normal_opt;
+        private static TextOptions font_bold_opt;
+        private static TextOptions font_italic_opt;
+
         private static Color bg_color;
         private static Color good_ping_color;
         private static Color bad_ping_color;
@@ -37,17 +43,26 @@ namespace McPing
             }
 
             FontFamily fontFamily = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font).FirstOrDefault();
-            if (fontFamily == null)
-            {
-                Program.LogError($"找不到字体{Program.Config.Show.Font}");
-                return false;
-            }
-
             fontFamily1 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font1).FirstOrDefault();
 
             font_normal = fontFamily.CreateFont(size);
             font_bold = fontFamily.CreateFont(size, FontStyle.Bold);
             font_italic = fontFamily.CreateFont(size, FontStyle.Italic);
+
+            font_normal_opt = new TextOptions(font_normal)
+            {
+                FallbackFontFamilies = new List<FontFamily>() { fontFamily1 }
+            };
+
+            font_bold_opt = new TextOptions(font_bold)
+            {
+                FallbackFontFamilies = new List<FontFamily>() { fontFamily1 }
+            };
+
+            font_italic_opt = new TextOptions(font_italic)
+            {
+                FallbackFontFamilies = new List<FontFamily>() { fontFamily1 }
+            };
 
             bg_color = Color.Parse(Program.Config.Show.BGColor);
             good_ping_color = Color.Parse(Program.Config.Show.GoodPingColor);
@@ -65,76 +80,195 @@ namespace McPing
         private const string randomString = "0123456789abcdef";
         public static string Gen(ServerInfo info)
         {
-            var textOptions = new TextOptions();
+            try
+            {
+                Image img = new Image<Rgba32>(660, 84);
+                img.Mutate((operation) =>
+                {
+                    operation.Clear(bg_color);
+                });
+                Image bitmap1;
+                if (info.IconData == null)
+                {
+                    bitmap1 = new Image<Rgba32>(64, 64);
+                }
+                else
+                {
+                    using MemoryStream stream = new();
+                    stream.Write(info.IconData);
+                    stream.Seek(0, SeekOrigin.Begin);
+                    bitmap1 = Image.Load(stream);
+                    bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
+                }
+                img.Mutate((operation) =>
+                {
+                    operation.DrawImage(bitmap1, new Point(10, 10), 1);
+                });
+                bitmap1.Dispose();
 
-            if(fontFamily1!=null)
-                textOptions.FallbackFonts.Add(fontFamily1);
+                var temp = info.MOTD.Split('\n');
+                float y = 10;
+                float x = 80;
+                FontRectangle res;
+                Color brush;
+                FontState now;
+                string[] temp1;
+                bool isStart = false;
+                foreach (var item in temp)
+                {
+                    x = 80;
+                    brush = Color.White;
+                    now = FontState.normal;
+                    temp1 = item.Split("§");
+                    if (item.StartsWith("§"))
+                        isStart = true;
+                    foreach (var item2 in temp1)
+                    {
+                        if (item2.Length == 0)
+                            continue;
+                        string draw = "";
+                        char color = item2.ToLower()[0];
 
-            var graphicsOptions = new GraphicsOptions()
-            {
-                Antialias = true,
-                AntialiasSubpixelDepth = 256
-            };
+                        if (!isStart)
+                        {
+                            draw = item2;
+                            isStart = true;
+                        }
+                        else if (color == '#')
+                        {
+                            string color1 = item2[..7];
+                            brush = Color.Parse(color1);
+                            draw = item2[7..];
+                        }
+                        else if (color == 'k')
+                        {
+                            GetBrush(randomString[new Random().Next(randomString.Length - 1)], out brush);
+                        }
+                        else if (color == 'l')
+                        {
+                            now = FontState.bold;
+                            draw = item2[1..];
+                        }
+                        else if (color == 'm')
+                        {
+                            now = FontState.strikethrough;
+                            draw = item2[1..];
+                        }
+                        else if (color == 'n')
+                        {
+                            now = FontState.underline;
+                            draw = item2[1..];
+                        }
+                        else if (color == 'o')
+                        {
+                            now = FontState.italic;
+                            draw = item2[1..];
+                        }
+                        else if (color == 'r')
+                        {
+                            now = FontState.normal;
+                            brush = Color.White;
+                            draw = item2[1..];
+                        }
+                        else
+                        {
+                            if (!GetBrush(color, out var temp2))
+                            {
+                                draw = item2;
+                            }
+                            else
+                            {
+                                brush = temp2;
+                                draw = item2[1..];
+                            }
+                        }
 
-            Image img = new Image<Rgba32>(660, 84);
-            img.Mutate((operation)=> 
-            {
-                operation.SetGraphicsOptions(graphicsOptions);
-                operation.Clear(bg_color);
-            });
-            Image bitmap1;
-            if (info.IconData == null)
-            {
-                bitmap1 = new Image<Rgba32>(64, 64);
-            }
-            else
-            {
-                using MemoryStream stream = new();
-                stream.Write(info.IconData);
-                stream.Seek(0, SeekOrigin.Begin);
-                bitmap1 = Image.Load(stream);
-                bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
-            }
-            img.Mutate((operation) => 
-            {
-                operation.SetGraphicsOptions(graphicsOptions);
-                operation.DrawImage(bitmap1, new Point(10, 10), 1);
-            });
-            bitmap1.Dispose();
+                        isStart = true;
 
-            var temp = info.MOTD.Split('\n');
-            float y = 10;
-            float x = 80;
-            FontRectangle res;
-            Color brush;
-            FontState now;
-            string[] temp1;
-            bool isStart = false;
-            foreach (var item in temp)
-            {
+                        if (draw.Length == 0)
+                        {
+                            continue;
+                        }
+
+                        switch (now)
+                        {
+                            default:
+                            case FontState.normal:
+                                res = TextMeasurer.Measure(draw, font_normal_opt);
+                                img.Mutate((a) =>
+                                {
+                                    a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                                });
+                                break;
+                            case FontState.bold:
+                                res = TextMeasurer.Measure(draw, font_bold_opt);
+                                img.Mutate((a) =>
+                                {
+                                    a.DrawText(draw, font_bold, brush, new PointF(x, y));
+                                });
+                                break;
+                            case FontState.strikethrough:
+                                res = TextMeasurer.Measure(draw, font_normal_opt);
+                                img.Mutate((a) =>
+                                {
+                                    a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                                    a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f));
+                                });
+                                break;
+                            case FontState.underline:
+                                res = TextMeasurer.Measure(draw, font_normal_opt);
+                                img.Mutate((a) =>
+                                {
+                                    a.DrawText(draw, font_normal, brush, new PointF(x, y));
+                                    a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f));
+                                });
+                                break;
+                            case FontState.italic:
+                                res = TextMeasurer.Measure(draw, font_italic_opt);
+                                img.Mutate((a) =>
+                                {
+                                    a.DrawText(draw, font_italic, brush, new PointF(x, y));
+                                });
+                                break;
+                        }
+                        x += res.Width;
+                        if (x > 580)
+                            break;
+                    }
+                    y += 20;
+                }
+                y = 50;
                 x = 80;
-                brush = Color.White;
+                string data = $"在线人数:{info.CurrentPlayerCount}/{info.MaxPlayerCount}";
+                res = TextMeasurer.Measure(data, font_italic_opt);
+                img.Mutate((a) =>
+                {
+                    a.DrawText(data, font_normal, player_color, new PointF(x, y));
+                });
+                x += res.Width + 10f;
+                data = $"服务器版本:";
+                res = TextMeasurer.Measure(data, font_italic_opt);
+                img.Mutate((a) =>
+                {
+                    a.DrawText(data, font_normal, version_color, new PointF(x, y));
+                });
+                x += res.Width + 10f;
+                brush = version_color;
                 now = FontState.normal;
-                temp1 = item.Split("§");
-                if (item.StartsWith("§"))
+                temp1 = ("r" + info.GameVersion).Split("§");
+                if (info.GameVersion.StartsWith("§"))
                     isStart = true;
                 foreach (var item2 in temp1)
                 {
                     if (item2.Length == 0)
                         continue;
-                    string draw = "";
                     char color = item2.ToLower()[0];
-                    
+                    string draw = "";
+
                     if (!isStart)
                     {
                         draw = item2;
                         isStart = true;
-                    }
-                    else if (color == '#')
-                    {
-                        string color1 = item2[..7];
-                        brush = Color.Parse(color1);
-                        draw = item2[7..];
                     }
                     else if (color == 'k')
                     {
@@ -178,232 +312,80 @@ namespace McPing
                             draw = item2[1..];
                         }
                     }
-
                     isStart = true;
 
                     if (draw.Length == 0)
                     {
                         continue;
                     }
-                        
+
                     switch (now)
                     {
                         default:
                         case FontState.normal:
-                            res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
+                            res = TextMeasurer.Measure(draw, font_normal_opt);
                             img.Mutate((a) =>
                             {
-                                a.SetTextOptions(textOptions);
-                                a.SetGraphicsOptions(graphicsOptions);
                                 a.DrawText(draw, font_normal, brush, new PointF(x, y));
                             });
                             break;
                         case FontState.bold:
-                            res = TextMeasurer.Measure(draw, new RendererOptions(font_bold));
+                            res = TextMeasurer.Measure(draw, font_bold_opt);
                             img.Mutate((a) =>
                             {
-                                a.SetTextOptions(textOptions);
-                                a.SetGraphicsOptions(graphicsOptions);
                                 a.DrawText(draw, font_bold, brush, new PointF(x, y));
                             });
                             break;
                         case FontState.strikethrough:
-                            res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
+                            res = TextMeasurer.Measure(draw, font_normal_opt);
                             img.Mutate((a) =>
                             {
-                                a.SetTextOptions(textOptions);
-                                a.SetGraphicsOptions(graphicsOptions);
                                 a.DrawText(draw, font_normal, brush, new PointF(x, y));
                                 a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f));
                             });
                             break;
                         case FontState.underline:
-                            res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
+                            res = TextMeasurer.Measure(draw, font_normal_opt);
                             img.Mutate((a) =>
                             {
-                                a.SetTextOptions(textOptions);
-                                a.SetGraphicsOptions(graphicsOptions);
                                 a.DrawText(draw, font_normal, brush, new PointF(x, y));
                                 a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f));
                             });
                             break;
                         case FontState.italic:
-                            res = TextMeasurer.Measure(draw, new RendererOptions(font_italic));
+                            res = TextMeasurer.Measure(draw, font_italic_opt);
                             img.Mutate((a) =>
                             {
-                                a.SetTextOptions(textOptions);
-                                a.SetGraphicsOptions(graphicsOptions);
                                 a.DrawText(draw, font_italic, brush, new PointF(x, y));
                             });
                             break;
                     }
                     x += res.Width;
                     if (x > 580)
-                        break;
-                }
-                y += 20;
-            }
-            y = 50;
-            x = 80;
-            string data = $"在线人数:{info.CurrentPlayerCount}/{info.MaxPlayerCount}";
-            res = TextMeasurer.Measure(data, new RendererOptions(font_italic));
-            img.Mutate((a) =>
-            {
-                a.SetTextOptions(textOptions);
-                a.SetGraphicsOptions(graphicsOptions);
-                a.DrawText(data, font_normal, player_color, new PointF(x, y));
-            });
-            x += res.Width + 10f;
-            data = $"服务器版本:";
-            res = TextMeasurer.Measure(data, new RendererOptions(font_italic));
-            img.Mutate((a) =>
-            {
-                a.SetTextOptions(textOptions);
-                a.SetGraphicsOptions(graphicsOptions);
-                a.DrawText(data, font_normal, version_color, new PointF(x, y));
-            });
-            x += res.Width + 10f;
-            brush = version_color;
-            now = FontState.normal;
-            temp1 = ("r" + info.GameVersion).Split("§");
-            if (info.GameVersion.StartsWith("§"))
-                isStart = true;
-            foreach (var item2 in temp1)
-            {
-                if (item2.Length == 0)
-                    continue;
-                char color = item2.ToLower()[0];
-                string draw = "";
-
-                if (!isStart)
-                {
-                    draw = item2;
-                    isStart = true;
-                }
-                else if (color == 'k')
-                {
-                    GetBrush(randomString[new Random().Next(randomString.Length - 1)], out brush);
-                }
-                else if (color == 'l')
-                {
-                    now = FontState.bold;
-                    draw = item2[1..];
-                }
-                else if (color == 'm')
-                {
-                    now = FontState.strikethrough;
-                    draw = item2[1..];
-                }
-                else if (color == 'n')
-                {
-                    now = FontState.underline;
-                    draw = item2[1..];
-                }
-                else if (color == 'o')
-                {
-                    now = FontState.italic;
-                    draw = item2[1..];
-                }
-                else if (color == 'r')
-                {
-                    now = FontState.normal;
-                    brush = Color.White;
-                    draw = item2[1..];
-                }
-                else
-                {
-                    if (!GetBrush(color, out var temp2))
                     {
-                        draw = item2;
-                    }
-                    else
-                    {
-                        brush = temp2;
-                        draw = item2[1..];
+                        img.Mutate((a) =>
+                        {
+                            a.DrawText("...", font_normal, version_color, new PointF(x, y));
+                        });
                     }
                 }
-                isStart = true;
 
-                if (draw.Length == 0)
+                img.Mutate((a) =>
                 {
-                    continue;
-                }
+                    a.DrawText("Ping", font_normal, good_ping_color, new PointF(600, 10));
+                    a.DrawText($"{info.Ping}", font_normal, info.Ping > 100 ? bad_ping_color : good_ping_color, new PointF(600, 30));
+                });
 
-                switch (now)
-                {
-                    default:
-                    case FontState.normal:
-                        res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
-                        img.Mutate((a) =>
-                        {
-                            a.SetTextOptions(textOptions);
-                            a.SetGraphicsOptions(graphicsOptions);
-                            a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                        });
-                        break;
-                    case FontState.bold:
-                        res = TextMeasurer.Measure(draw, new RendererOptions(font_bold));
-                        img.Mutate((a) =>
-                        {
-                            a.SetTextOptions(textOptions);
-                            a.SetGraphicsOptions(graphicsOptions);
-                            a.DrawText(draw, font_bold, brush, new PointF(x, y));
-                        });
-                        break;
-                    case FontState.strikethrough:
-                        res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
-                        img.Mutate((a) =>
-                        {
-                            a.SetTextOptions(textOptions);
-                            a.SetGraphicsOptions(graphicsOptions);
-                            a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                            a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f));
-                        });
-                        break;
-                    case FontState.underline:
-                        res = TextMeasurer.Measure(draw, new RendererOptions(font_normal));
-                        img.Mutate((a) =>
-                        {
-                            a.SetTextOptions(textOptions);
-                            a.SetGraphicsOptions(graphicsOptions);
-                            a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                            a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f));
-                        });
-                        break;
-                    case FontState.italic:
-                        res = TextMeasurer.Measure(draw, new RendererOptions(font_italic));
-                        img.Mutate((a) =>
-                        {
-                            a.SetTextOptions(textOptions);
-                            a.SetGraphicsOptions(graphicsOptions);
-                            a.DrawText(draw, font_italic, brush, new PointF(x, y));
-                        });
-                        break;
-                }
-                x += res.Width;
-                if (x > 580)
-                {
-                    img.Mutate((a) =>
-                    {
-                        a.SetTextOptions(textOptions);
-                        a.SetGraphicsOptions(graphicsOptions);
-                        a.DrawText("...", font_normal, version_color, new PointF(x, y));
-                    });
-                }
+                string local = PicDir + info.IP + ".png";
+                img.SaveAsPng(local);
+                Program.LogOut("生成图片" + local);
+                return local;
             }
-
-            img.Mutate((a) =>
-            {
-                a.SetTextOptions(textOptions);
-                a.SetGraphicsOptions(graphicsOptions);
-                a.DrawText("Ping", font_normal, good_ping_color, new PointF(600, 10));
-                a.DrawText($"{info.Ping}", font_normal, info.Ping > 100 ? bad_ping_color : good_ping_color, new PointF(600, 30));
-            });
-
-            string local = PicDir + info.IP + ".png";
-            img.SaveAsPng(local);
-            Program.LogOut("生成图片" + local);
-            return local;
+            catch (Exception e)
+            { 
+            
+            }
+            return null;
         }
 
         private static Color C0 = Color.Parse("#000000");
