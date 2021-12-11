@@ -15,23 +15,23 @@ namespace McPing
         private const string PicName = "PicTemp";
         private static string PicDir;
 
-        private static Font font_normal;
-        private static Font font_bold;
-        private static Font font_italic;
+        private static Font FontNormal;
+        private static Font FontBold;
+        private static Font FontItalic;
 
-        private static TextOptions font_normal_opt;
-        private static TextOptions font_bold_opt;
-        private static TextOptions font_italic_opt;
+        private static TextOptions FontNormalOpt;
+        private static TextOptions FontBoldOpt;
+        private static TextOptions FontItalicOpt;
 
-        private static Color bg_color;
-        private static Color good_ping_color;
-        private static Color bad_ping_color;
-        private static Color player_color;
-        private static Color version_color;
+        private static Color BackgroundColor;
+        private static Color GoodPingColor;
+        private static Color BadPingColor;
+        private static Color PlayerColor;
+        private static Color VersionColor;
 
-        private const int size = 17;
+        private const int Size = 17;
 
-        private static FontFamily fontFamily1;
+        private static FontFamily FontFamily1;
 
         public static bool Init()
         {
@@ -43,32 +43,32 @@ namespace McPing
             }
 
             FontFamily fontFamily = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font).FirstOrDefault();
-            fontFamily1 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font1).FirstOrDefault();
+            FontFamily1 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font1).FirstOrDefault();
 
-            font_normal = fontFamily.CreateFont(size);
-            font_bold = fontFamily.CreateFont(size, FontStyle.Bold);
-            font_italic = fontFamily.CreateFont(size, FontStyle.Italic);
+            FontNormal = fontFamily.CreateFont(Size);
+            FontBold = fontFamily.CreateFont(Size, FontStyle.Bold);
+            FontItalic = fontFamily.CreateFont(Size, FontStyle.Italic);
 
-            font_normal_opt = new TextOptions(font_normal)
+            FontNormalOpt = new TextOptions(FontNormal)
             {
-                FallbackFontFamilies = new List<FontFamily>() { fontFamily1 }
+                FallbackFontFamilies = new List<FontFamily>() { FontFamily1 }
             };
 
-            font_bold_opt = new TextOptions(font_bold)
+            FontBoldOpt = new TextOptions(FontBold)
             {
-                FallbackFontFamilies = new List<FontFamily>() { fontFamily1 }
+                FallbackFontFamilies = new List<FontFamily>() { FontFamily1 }
             };
 
-            font_italic_opt = new TextOptions(font_italic)
+            FontItalicOpt = new TextOptions(FontItalic)
             {
-                FallbackFontFamilies = new List<FontFamily>() { fontFamily1 }
+                FallbackFontFamilies = new List<FontFamily>() { FontFamily1 }
             };
 
-            bg_color = Color.Parse(Program.Config.Show.BGColor);
-            good_ping_color = Color.Parse(Program.Config.Show.GoodPingColor);
-            bad_ping_color = Color.Parse(Program.Config.Show.BadPingColor);
-            player_color = Color.Parse(Program.Config.Show.PlayerColor);
-            version_color = Color.Parse(Program.Config.Show.VersionColor);
+            BackgroundColor = Color.Parse(Program.Config.Show.BGColor);
+            GoodPingColor = Color.Parse(Program.Config.Show.GoodPingColor);
+            BadPingColor = Color.Parse(Program.Config.Show.BadPingColor);
+            PlayerColor = Color.Parse(Program.Config.Show.PlayerColor);
+            VersionColor = Color.Parse(Program.Config.Show.VersionColor);
 
             return true;
         }
@@ -85,7 +85,7 @@ namespace McPing
                 Image img = new Image<Rgba32>(660, 84);
                 img.Mutate((operation) =>
                 {
-                    operation.Clear(bg_color);
+                    //operation.Clear(bg_color);
                 });
                 Image bitmap1;
                 if (info.IconData == null)
@@ -194,41 +194,39 @@ namespace McPing
                         {
                             default:
                             case FontState.normal:
-                                res = TextMeasurer.Measure(draw, font_normal_opt);
-                                img.Mutate((a) =>
+                                res = TextMeasurer.Measure(draw, FontNormalOpt);
+                                img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                                 {
-                                    a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                                });
+                                    Origin = new PointF(x, y)
+                                }, draw, brush));
                                 break;
                             case FontState.bold:
-                                res = TextMeasurer.Measure(draw, font_bold_opt);
-                                img.Mutate((a) =>
+                                res = TextMeasurer.Measure(draw, FontBoldOpt);
+                                img.Mutate(a => a.DrawText(new TextOptions(FontBoldOpt)
                                 {
-                                    a.DrawText(draw, font_bold, brush, new PointF(x, y));
-                                });
+                                    Origin = new PointF(x, y)
+                                }, draw, brush));
                                 break;
                             case FontState.strikethrough:
-                                res = TextMeasurer.Measure(draw, font_normal_opt);
-                                img.Mutate((a) =>
+                                res = TextMeasurer.Measure(draw, FontNormalOpt);
+                                img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                                 {
-                                    a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                                    a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f));
-                                });
+                                    Origin = new PointF(x, y)
+                                }, draw, brush).DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f)));
                                 break;
                             case FontState.underline:
-                                res = TextMeasurer.Measure(draw, font_normal_opt);
-                                img.Mutate((a) =>
+                                res = TextMeasurer.Measure(draw, FontNormalOpt);
+                                img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                                 {
-                                    a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                                    a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f));
-                                });
+                                    Origin = new PointF(x, y)
+                                }, draw, brush).DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f)));
                                 break;
                             case FontState.italic:
-                                res = TextMeasurer.Measure(draw, font_italic_opt);
-                                img.Mutate((a) =>
+                                res = TextMeasurer.Measure(draw, FontItalicOpt);
+                                img.Mutate(a => a.DrawText(new TextOptions(FontItalicOpt)
                                 {
-                                    a.DrawText(draw, font_italic, brush, new PointF(x, y));
-                                });
+                                    Origin = new PointF(x, y)
+                                }, draw, brush));
                                 break;
                         }
                         x += res.Width;
@@ -240,20 +238,20 @@ namespace McPing
                 y = 50;
                 x = 80;
                 string data = $"在线人数:{info.CurrentPlayerCount}/{info.MaxPlayerCount}";
-                res = TextMeasurer.Measure(data, font_italic_opt);
-                img.Mutate((a) =>
+                res = TextMeasurer.Measure(data, FontItalicOpt);
+                img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                 {
-                    a.DrawText(data, font_normal, player_color, new PointF(x, y));
-                });
+                    Origin = new PointF(x, y)
+                }, data, PlayerColor));
                 x += res.Width + 10f;
                 data = $"服务器版本:";
-                res = TextMeasurer.Measure(data, font_italic_opt);
-                img.Mutate((a) =>
+                res = TextMeasurer.Measure(data, FontItalicOpt);
+                img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                 {
-                    a.DrawText(data, font_normal, version_color, new PointF(x, y));
-                });
+                    Origin = new PointF(x, y)
+                }, data, VersionColor));
                 x += res.Width + 10f;
-                brush = version_color;
+                brush = VersionColor;
                 now = FontState.normal;
                 temp1 = ("r" + info.GameVersion).Split("§");
                 if (info.GameVersion.StartsWith("§"))
@@ -323,58 +321,58 @@ namespace McPing
                     {
                         default:
                         case FontState.normal:
-                            res = TextMeasurer.Measure(draw, font_normal_opt);
-                            img.Mutate((a) =>
+                            res = TextMeasurer.Measure(draw, FontNormalOpt);
+                            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                             {
-                                a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                            });
+                                Origin = new PointF(x, y)
+                            }, draw, brush));
                             break;
                         case FontState.bold:
-                            res = TextMeasurer.Measure(draw, font_bold_opt);
-                            img.Mutate((a) =>
+                            res = TextMeasurer.Measure(draw, FontBoldOpt);
+                            img.Mutate(a => a.DrawText(new TextOptions(FontBoldOpt)
                             {
-                                a.DrawText(draw, font_bold, brush, new PointF(x, y));
-                            });
+                                Origin = new PointF(x, y)
+                            }, draw, brush));
                             break;
                         case FontState.strikethrough:
-                            res = TextMeasurer.Measure(draw, font_normal_opt);
-                            img.Mutate((a) =>
+                            res = TextMeasurer.Measure(draw, FontNormalOpt);
+                            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                             {
-                                a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                                a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f));
-                            });
+                                Origin = new PointF(x, y)
+                            }, draw, brush).DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f)));
                             break;
                         case FontState.underline:
-                            res = TextMeasurer.Measure(draw, font_normal_opt);
-                            img.Mutate((a) =>
+                            res = TextMeasurer.Measure(draw, FontNormalOpt);
+                            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                             {
-                                a.DrawText(draw, font_normal, brush, new PointF(x, y));
-                                a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f));
-                            });
+                                Origin = new PointF(x, y)
+                            }, draw, brush).DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f)));
                             break;
                         case FontState.italic:
-                            res = TextMeasurer.Measure(draw, font_italic_opt);
-                            img.Mutate((a) =>
+                            res = TextMeasurer.Measure(draw, FontItalicOpt);
+                            img.Mutate(a => a.DrawText(new TextOptions(FontItalicOpt)
                             {
-                                a.DrawText(draw, font_italic, brush, new PointF(x, y));
-                            });
+                                Origin = new PointF(x, y)
+                            }, draw, brush));
                             break;
                     }
                     x += res.Width;
                     if (x > 580)
                     {
-                        img.Mutate((a) =>
+                        img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                         {
-                            a.DrawText("...", font_normal, version_color, new PointF(x, y));
-                        });
+                            Origin = new PointF(x, y)
+                        }, "...", VersionColor));
                     }
                 }
 
-                img.Mutate((a) =>
+                img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                 {
-                    a.DrawText("Ping", font_normal, good_ping_color, new PointF(600, 10));
-                    a.DrawText($"{info.Ping}", font_normal, info.Ping > 100 ? bad_ping_color : good_ping_color, new PointF(600, 30));
-                });
+                    Origin = new PointF(600, 10)
+                }, "Ping", GoodPingColor).DrawText(new TextOptions(FontNormalOpt) 
+                {
+                    Origin = new PointF(600, 30)
+                }, $"{info.Ping}", info.Ping > 100 ? BadPingColor : GoodPingColor));
 
                 string local = PicDir + info.IP + ".png";
                 img.SaveAsPng(local);

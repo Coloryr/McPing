@@ -3,6 +3,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -13,7 +15,7 @@
     <PackageReference Include="Heijden.Dns.Portable" Version="2.0.19" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta15.24" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="2.0.0-alpha.0.127" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.0.0-alpha.0.126" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta13.16" />
   </ItemGroup>
 
