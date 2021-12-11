@@ -15,8 +15,10 @@ namespace McPing
     }
     class ShowObj
     { 
-        public string Font { get; set; }
-        public string Font1 { get; set; }
+        public string FontNormal { get; set; }
+        public string FontEmoji { get; set; }
+        public string FontBold { get; set; }
+        public string FontItalic { get; set; }
         public string BGColor { get; set; }
         public string GoodPingColor { get; set; }
         public string BadPingColor { get; set; }

@@ -3,12 +3,15 @@ using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 using System.Threading;
+using SixLabors.Fonts;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace McPing
 {
     class Program
     {
-        public const string Version = "1.1.0";
+        public const string Version = "1.2.0";
         public static string RunLocal { get; private set; }
         public static ConfigObj Config { get; private set; }
 
@@ -125,6 +128,19 @@ namespace McPing
         private static void State(StateType type)
             => LogOut($"机器人状态:{type}");
 
+        public struct Pairing
+        {
+            public Pairing(string name, string path)
+            {
+                this.Name = name;
+                this.Path = path;
+            }
+
+            public string Name { get; }
+
+            public string Path { get; }
+        }
+
         static void Main(string[] args)
         {
             RunLocal = AppContext.BaseDirectory;
@@ -142,8 +158,10 @@ namespace McPing
                 RunQQ = 0,
                 Show = new ShowObj()
                 {
-                    Font = "Microsoft YaHei",
-                    Font1 = "Segoe UI Emoji",
+                    FontNormal = "Microsoft YaHei",
+                    FontBold = "Microsoft YaHei",
+                    FontItalic = "Microsoft YaHei",
+                    FontEmoji = "Segoe UI Emoji",
                     BGColor = "#1C1C1C",
                     GoodPingColor = "#7CFC00",
                     BadPingColor = "#FF4500",
@@ -191,6 +209,29 @@ namespace McPing
                     robot.Stop();
                     return;
                 }
+                else if (arg[0] == "font")
+                {
+                    IOrderedEnumerable<FontFamily> ordered = SystemFonts.Families.OrderBy(x => x.Name);
+                    foreach (FontFamily family in ordered)
+                    {
+                        var pairings = new List<Pairing>();
+                        IOrderedEnumerable<FontStyle> styles = family.GetAvailableStyles().OrderBy(x => x);
+                        foreach (FontStyle style in styles)
+                        {
+                            Font font = family.CreateFont(0F, style);
+                            font.TryGetPath(out string path);
+                            pairings.Add(new Pairing(font.Name, path));
+                        }
+                        Console.WriteLine($"{family.Name}");
+                        int max = pairings.Max(x => x.Name.Length);
+                        foreach (Pairing p in pairings)
+                        {
+                            Console.WriteLine($"    {p.Name.PadRight(max)} {p.Path}");
+                        }
+                    }
+
+                    
+                }
                 else if (arg[0] == "test")
                 {
                     if (arg.Length < 2)
@@ -204,18 +245,18 @@ namespace McPing
                         Task.Run(async () =>
                         {
                             CancellationTokenSource cancel = new();
-                            var task = Task.Run( () =>
-                            {
-                                string local = PingUtils.Get(arg[1], cancel.Token);
-                                if (local == null)
-                                {
-                                    LogError("生成错误");
-                                }
-                                else
-                                {
-                                    LogOut("生成成功");
-                                }
-                            }, cancel.Token);
+                            var task = Task.Run(() =>
+                           {
+                               string local = PingUtils.Get(arg[1], cancel.Token);
+                               if (local == null)
+                               {
+                                   LogError("生成错误");
+                               }
+                               else
+                               {
+                                   LogOut("生成成功");
+                               }
+                           }, cancel.Token);
                             int timeout = 8000;
                             if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
                             {

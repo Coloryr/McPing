@@ -31,7 +31,7 @@ namespace McPing
 
         private const int Size = 17;
 
-        private static FontFamily FontFamily1;
+        private static FontFamily FontEmoji;
 
         public static bool Init()
         {
@@ -42,26 +42,31 @@ namespace McPing
                 Directory.CreateDirectory(PicDir);
             }
 
-            FontFamily fontFamily = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font).FirstOrDefault();
-            FontFamily1 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.Font1).FirstOrDefault();
+            var temp = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontNormal).FirstOrDefault();
 
-            FontNormal = fontFamily.CreateFont(Size);
-            FontBold = fontFamily.CreateFont(Size, FontStyle.Bold);
-            FontItalic = fontFamily.CreateFont(Size, FontStyle.Italic);
+            var temp1 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontBold).FirstOrDefault();
+
+            var temp2 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontItalic).FirstOrDefault();
+
+            FontEmoji = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontEmoji).FirstOrDefault();
+
+            FontNormal = temp.CreateFont(Size);
+            FontBold = temp1.CreateFont(Size, FontStyle.Bold);
+            FontItalic = temp2.CreateFont(Size, FontStyle.Italic);
 
             FontNormalOpt = new TextOptions(FontNormal)
             {
-                FallbackFontFamilies = new List<FontFamily>() { FontFamily1 }
+                FallbackFontFamilies = new List<FontFamily>() { FontEmoji }
             };
 
             FontBoldOpt = new TextOptions(FontBold)
             {
-                FallbackFontFamilies = new List<FontFamily>() { FontFamily1 }
+                FallbackFontFamilies = new List<FontFamily>() { FontEmoji }
             };
 
             FontItalicOpt = new TextOptions(FontItalic)
             {
-                FallbackFontFamilies = new List<FontFamily>() { FontFamily1 }
+                FallbackFontFamilies = new List<FontFamily>() { FontEmoji }
             };
 
             BackgroundColor = Color.Parse(Program.Config.Show.BGColor);
@@ -75,7 +80,7 @@ namespace McPing
 
         enum FontState
         {
-            normal, bold, strikethrough, underline, italic
+            normal, bold, italic
         }
         private const string randomString = "0123456789abcdef";
         public static string Gen(ServerInfo info)
@@ -85,7 +90,7 @@ namespace McPing
                 Image img = new Image<Rgba32>(660, 84);
                 img.Mutate((operation) =>
                 {
-                    //operation.Clear(bg_color);
+                    operation.Clear(BackgroundColor);
                 });
                 Image bitmap1;
                 if (info.IconData == null)
@@ -114,8 +119,12 @@ namespace McPing
                 FontState now;
                 string[] temp1;
                 bool isStart = false;
+                bool underline = false;
+                bool strikethrough = false;
                 foreach (var item in temp)
                 {
+                    strikethrough = false;
+                    underline = false;
                     x = 80;
                     brush = Color.White;
                     now = FontState.normal;
@@ -151,12 +160,12 @@ namespace McPing
                         }
                         else if (color == 'm')
                         {
-                            now = FontState.strikethrough;
+                            strikethrough = true;
                             draw = item2[1..];
                         }
                         else if (color == 'n')
                         {
-                            now = FontState.underline;
+                            underline = true;
                             draw = item2[1..];
                         }
                         else if (color == 'o')
@@ -166,6 +175,8 @@ namespace McPing
                         }
                         else if (color == 'r')
                         {
+                            strikethrough = false;
+                            underline = false;
                             now = FontState.normal;
                             brush = Color.White;
                             draw = item2[1..];
@@ -207,20 +218,6 @@ namespace McPing
                                     Origin = new PointF(x, y)
                                 }, draw, brush));
                                 break;
-                            case FontState.strikethrough:
-                                res = TextMeasurer.Measure(draw, FontNormalOpt);
-                                img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
-                                {
-                                    Origin = new PointF(x, y)
-                                }, draw, brush).DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f)));
-                                break;
-                            case FontState.underline:
-                                res = TextMeasurer.Measure(draw, FontNormalOpt);
-                                img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
-                                {
-                                    Origin = new PointF(x, y)
-                                }, draw, brush).DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f)));
-                                break;
                             case FontState.italic:
                                 res = TextMeasurer.Measure(draw, FontItalicOpt);
                                 img.Mutate(a => a.DrawText(new TextOptions(FontItalicOpt)
@@ -229,6 +226,16 @@ namespace McPing
                                 }, draw, brush));
                                 break;
                         }
+
+                        if (underline)
+                        {
+                            img.Mutate(a => a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f)));
+                        }
+                        if (strikethrough)
+                        {
+                            img.Mutate(a => a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f)));
+                        }
+
                         x += res.Width;
                         if (x > 580)
                             break;
@@ -279,12 +286,12 @@ namespace McPing
                     }
                     else if (color == 'm')
                     {
-                        now = FontState.strikethrough;
+                        strikethrough = true;
                         draw = item2[1..];
                     }
                     else if (color == 'n')
                     {
-                        now = FontState.underline;
+                        underline = true;
                         draw = item2[1..];
                     }
                     else if (color == 'o')
@@ -294,6 +301,8 @@ namespace McPing
                     }
                     else if (color == 'r')
                     {
+                        strikethrough = false;
+                        underline = false;
                         now = FontState.normal;
                         brush = Color.White;
                         draw = item2[1..];
@@ -334,20 +343,6 @@ namespace McPing
                                 Origin = new PointF(x, y)
                             }, draw, brush));
                             break;
-                        case FontState.strikethrough:
-                            res = TextMeasurer.Measure(draw, FontNormalOpt);
-                            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
-                            {
-                                Origin = new PointF(x, y)
-                            }, draw, brush).DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f)));
-                            break;
-                        case FontState.underline:
-                            res = TextMeasurer.Measure(draw, FontNormalOpt);
-                            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
-                            {
-                                Origin = new PointF(x, y)
-                            }, draw, brush).DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f)));
-                            break;
                         case FontState.italic:
                             res = TextMeasurer.Measure(draw, FontItalicOpt);
                             img.Mutate(a => a.DrawText(new TextOptions(FontItalicOpt)
@@ -356,6 +351,16 @@ namespace McPing
                             }, draw, brush));
                             break;
                     }
+
+                    if (underline)
+                    {
+                        img.Mutate(a => a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f)));
+                    }
+                    if (strikethrough)
+                    {
+                        img.Mutate(a => a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f)));
+                    }
+
                     x += res.Width;
                     if (x > 580)
                     {
