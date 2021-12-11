@@ -14,22 +14,22 @@ namespace McPing
 {
     class PingUtils
     {
-        public static string Get(string IP, CancellationToken cancellationToken)
+        public static Task<string> Get(string IP, CancellationToken cancellationToken)
         {
             if (IP.Contains(':'))
             {
                 var temp = IP.LastIndexOf(':') + 1;
                 if (!ushort.TryParse(IP[temp..], out var port))
                     return null;
-                return Get(IP[0..(temp - 1)], port, cancellationToken).Result;
+                return Get(IP[0..(temp - 1)], port, cancellationToken);
             }
-            return Get(IP, 25565, cancellationToken).Result;
+            return Get(IP, 25565, cancellationToken);
         }
-        public static string Get(string IP,string Port, CancellationToken cancellationToken)
+        public static Task<string> Get(string IP, string Port, CancellationToken cancellationToken)
         {
             if (!ushort.TryParse(Port, out var port))
                 return null;
-            return Get(IP, port, cancellationToken).Result;
+            return Get(IP, port, cancellationToken);
         }
         private static async Task<string> Get(string IP, ushort Port, CancellationToken cancellationToken)
         {

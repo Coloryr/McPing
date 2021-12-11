@@ -35,9 +35,9 @@ namespace McPing
                                 Task.Run(async () =>
                                 {
                                     CancellationTokenSource cancel = new();
-                                    var task = Task.Run(() =>
+                                    var task = Task.Run(async () =>
                                     {
-                                        string local = PingUtils.Get(Config.DefaultIP, cancel.Token);
+                                        string local = await PingUtils.Get(Config.DefaultIP, cancel.Token);
                                         if (local == null)
                                         {
                                             SendMessageGroup(pack.id, $"获取{Config.DefaultIP}错误");
@@ -70,9 +70,9 @@ namespace McPing
                                 Task.Run(async () =>
                                 {
                                     CancellationTokenSource cancel = new();
-                                    var task = Task.Run(() =>
+                                    var task = Task.Run(async () =>
                                    {
-                                       string local = PingUtils.Get(ip, port, cancel.Token);
+                                       string local = await PingUtils.Get(ip, port, cancel.Token);
                                        if (local == null)
                                        {
                                            SendMessageGroup(pack.id, $"获取{ip}:{port}错误");
@@ -96,9 +96,9 @@ namespace McPing
                                 Task.Run(async () =>
                                 {
                                     CancellationTokenSource cancel = new();
-                                    var task = Task.Run(() =>
+                                    var task = Task.Run(async () =>
                                    {
-                                       string local = PingUtils.Get(ip, cancel.Token);
+                                       string local = await PingUtils.Get(ip, cancel.Token);
                                        if (local == null)
                                        {
                                            SendMessageGroup(pack.id, $"获取{ip}错误");
@@ -141,7 +141,7 @@ namespace McPing
             public string Path { get; }
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             RunLocal = AppContext.BaseDirectory;
             logs = new Logs(RunLocal);
@@ -242,32 +242,38 @@ namespace McPing
                     string res = null;
                     if (arg.Length == 2)
                     {
-                        Task.Run(async () =>
+                        CancellationTokenSource cancel = new();
+                        var task = Task.Run(async () =>
                         {
-                            CancellationTokenSource cancel = new();
-                            var task = Task.Run(() =>
-                           {
-                               string local = PingUtils.Get(arg[1], cancel.Token);
-                               if (local == null)
-                               {
-                                   LogError("生成错误");
-                               }
-                               else
-                               {
-                                   LogOut("生成成功");
-                               }
-                           }, cancel.Token);
-                            int timeout = 8000;
-                            if (await Task.WhenAny(task, Task.Delay(timeout)) != task)
+                            try
                             {
-                                cancel.Cancel(false);
-                                LogError("生成超时");
+                                string local = await PingUtils.Get(arg[1], cancel.Token);
+                                if (local == null)
+                                {
+                                    LogError("生成错误");
+                                }
+                                else
+                                {
+                                    LogOut("生成成功");
+                                }
                             }
-                        });
+                            catch (Exception e)
+                            {
+                                LogError("生成错误");
+                                LogError(e);
+                            }
+                        }, cancel.Token);
+                        int timeout = 8000;
+                        Task res1 = await Task.WhenAny(task, Task.Delay(timeout));
+                        if (res1 != task)
+                        {
+                            cancel.Cancel(false);
+                            LogError("生成超时");
+                        }
                     }
                     else if (arg.Length == 3)
                     {
-                        res = PingUtils.Get(arg[1], arg[2], CancellationToken.None);
+                        res = await PingUtils.Get(arg[1], arg[2], CancellationToken.None);
                     }
                     else
                     {
