@@ -3,6 +3,8 @@
 
 使用[ColorMirai](https://github.com/Coloryr/ColorMirai)
 
+注：启动前请安装net6
+
 ## 启动
 下载压缩包，解压到一个地方  
 Windows双击运行`McPing.exe`生成默认配置  
@@ -19,3 +21,4 @@ dotnet McPing.dll
 
 ## 修订
 1.0.1: 可能吞字的问题
+1.1.0：更换库
