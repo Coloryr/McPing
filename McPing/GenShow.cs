@@ -385,8 +385,8 @@ namespace McPing
                 return local;
             }
             catch (Exception e)
-            { 
-            
+            {
+                Program.LogError(e);
             }
             return null;
         }
