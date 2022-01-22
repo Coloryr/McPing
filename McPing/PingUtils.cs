@@ -14,62 +14,57 @@ namespace McPing
 {
     class PingUtils
     {
-        public static Task<string> Get(string IP, CancellationToken cancellationToken)
+        public static Task<string> Get(string IP)
         {
             if (IP.Contains(':'))
             {
                 var temp = IP.LastIndexOf(':') + 1;
                 if (!ushort.TryParse(IP[temp..], out var port))
                     return null;
-                return Get(IP[0..(temp - 1)], port, cancellationToken);
+                return Get(IP[0..(temp - 1)], port);
             }
-            return Get(IP, 25565, cancellationToken);
+            return Get(IP, 25565);
         }
-        public static Task<string> Get(string IP, string Port, CancellationToken cancellationToken)
+        public static Task<string> Get(string IP, string Port)
         {
             if (!ushort.TryParse(Port, out var port))
                 return null;
-            return Get(IP, port, cancellationToken);
+            return Get(IP, port);
         }
-        private static async Task<string> Get(string IP, ushort Port, CancellationToken cancellationToken)
+        private static async Task<string> Get(string IP, ushort Port)
         {
             string origin;
             TcpClient tcp;
             try
             {
-                tcp = new TcpClient();
-                await tcp.ConnectAsync(IP, Port, cancellationToken);
+                tcp = new TcpClient()
+                {
+                    ReceiveTimeout = 5000
+                };
+                await tcp.ConnectAsync(IP, Port);
                 origin = $"{IP}_{Port}";
             }
             catch (SocketException)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return null;
-                }
                 origin = IP;
                 var res = new Resolver().Query("_minecraft._tcp." + IP, QType.SRV);
-                await res.WaitAsync(cancellationToken);
+                await res.WaitAsync(TimeSpan.FromSeconds(5));
                 if (res.Result?.Answers?.FirstOrDefault()?.RECORD is RecordSRV result)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        return null;
-                    }
                     tcp = new TcpClient();
-                    await tcp.ConnectAsync(IP = result.TARGET[..^1], Port = result.PORT, cancellationToken);
+                    await tcp.ConnectAsync(IP = result.TARGET[..^1], Port = result.PORT);
                 }
                 else
                 {
                     return null;
                 }
             }
-            if (cancellationToken.IsCancellationRequested)
+            catch (Exception)
             {
                 return null;
             }
             ServerInfo info = new();
-            if (info.StartGetServerInfo(tcp, IP, Port, origin, cancellationToken))
+            if (info.StartGetServerInfo(tcp, IP, Port, origin))
             {
                 return GenShow.Gen(info);
             }
@@ -133,7 +128,7 @@ namespace McPing
         /// 获取与特定格式代码相关联的颜色代码
         /// </summary>
 
-        public bool StartGetServerInfo(TcpClient tcp, string IP, ushort Port, string orgin, CancellationToken cancellationToken)
+        public bool StartGetServerInfo(TcpClient tcp, string IP, ushort Port, string orgin)
         {
             try
             {
@@ -156,15 +151,11 @@ namespace McPing
                 tcp.Client.Send(tosend, SocketFlags.None);
 
                 tcp.Client.Send(request_packet, SocketFlags.None);
-                if (cancellationToken.IsCancellationRequested)
-                    return false;
                 ProtocolHandler handler = new(tcp);
                 int packetLength = handler.readNextVarIntRAW();
                 if (packetLength > 0)
                 {
                     List<byte> packetData = new(handler.readDataRAW(packetLength));
-                    if (cancellationToken.IsCancellationRequested)
-                        return false;
                     if (ProtocolHandler.readNextVarInt(packetData) == 0x00) //Read Packet ID
                     {
                         string result = ProtocolHandler.readNextString(packetData); //Get the Json data
