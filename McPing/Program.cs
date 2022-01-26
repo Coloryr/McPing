@@ -6,12 +6,14 @@ using System.Threading;
 using SixLabors.Fonts;
 using System.Collections.Generic;
 using System.Linq;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace McPing
 {
     class Program
     {
-        public const string Version = "1.3.0";
+        public const string Version = "1.4.0";
         public static string RunLocal { get; private set; }
         public static ConfigObj Config { get; private set; }
 
@@ -34,10 +36,11 @@ namespace McPing
                             {
                                 Task.Run(async () =>
                                 {
+                                    SendMessageGroup(pack.id, $"正在获取[{Config.DefaultIP}]");
                                     string local = await PingUtils.Get(Config.DefaultIP);
                                     if (local == null)
                                     {
-                                        SendMessageGroup(pack.id, $"获取{Config.DefaultIP}错误");
+                                        SendMessageGroup(pack.id, $"获取[{Config.DefaultIP}]错误");
                                     }
                                     else
                                     {
@@ -48,8 +51,7 @@ namespace McPing
                             }
                             if (message.Length == 1)
                             {
-
-                                SendMessageGroup(pack.id, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片");
+                                SendMessageGroup(pack.id, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
                                 break;
                             }
                             var ip = message[1];
@@ -58,6 +60,7 @@ namespace McPing
                                 var port = message[2];
                                 Task.Run(async () =>
                                 {
+                                    SendMessageGroup(pack.id, $"正在获取[{Config.DefaultIP}]");
                                     string local = await PingUtils.Get(ip, port);
                                     if (local == null)
                                     {
@@ -111,6 +114,7 @@ namespace McPing
 
         static async Task Main(string[] args)
         {
+            Console.WriteLine($"[Main]正在启动McPing {Version}");
             RunLocal = AppContext.BaseDirectory;
             logs = new Logs(RunLocal);
             Config = ConfigUtils.Config(new ConfigObj()

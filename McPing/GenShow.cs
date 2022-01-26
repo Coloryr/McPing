@@ -83,7 +83,7 @@ namespace McPing
             normal, bold, italic
         }
         private const string randomString = "0123456789abcdef";
-        public static string Gen(ServerInfo info)
+        public static string Gen(IServerInfo info)
         {
             try
             {
