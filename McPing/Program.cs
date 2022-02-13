@@ -1,13 +1,10 @@
 ﻿using ColoryrSDK;
 using Newtonsoft.Json;
-using System;
-using System.Threading.Tasks;
-using System.Threading;
 using SixLabors.Fonts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using System.Threading.Tasks;
 
 namespace McPing
 {
@@ -60,7 +57,7 @@ namespace McPing
                                 var port = message[2];
                                 Task.Run(async () =>
                                 {
-                                    SendMessageGroup(pack.id, $"正在获取[{Config.DefaultIP}]");
+                                    SendMessageGroup(pack.id, $"正在获取[{ip}:{port}]");
                                     string local = await PingUtils.Get(ip, port);
                                     if (local == null)
                                     {
@@ -202,7 +199,7 @@ namespace McPing
                         }
                     }
 
-                    
+
                 }
                 else if (arg[0] == "test")
                 {

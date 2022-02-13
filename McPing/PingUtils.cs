@@ -5,11 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace McPing
@@ -251,7 +248,7 @@ namespace McPing
                 byte[] protocol_version = ProtocolHandler.getVarInt(754);
                 byte[] server_adress_val = Encoding.UTF8.GetBytes(IP);
                 byte[] server_adress_len = ProtocolHandler.getVarInt(server_adress_val.Length);
-                byte[] server_port = BitConverter.GetBytes(Port); 
+                byte[] server_port = BitConverter.GetBytes(Port);
                 Array.Reverse(server_port);
                 byte[] next_state = ProtocolHandler.getVarInt(1);
                 byte[] packet2 = ProtocolHandler.concatBytes(packet_id, protocol_version, server_adress_len, server_adress_val, server_port, next_state);

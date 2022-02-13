@@ -1,12 +1,12 @@
-﻿using System;
-using System.IO;
-using SixLabors.Fonts;
+﻿using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using System.Linq;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace McPing
 {
@@ -374,7 +374,7 @@ namespace McPing
                 img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
                 {
                     Origin = new PointF(600, 10)
-                }, "Ping", GoodPingColor).DrawText(new TextOptions(FontNormalOpt) 
+                }, "Ping", GoodPingColor).DrawText(new TextOptions(FontNormalOpt)
                 {
                     Origin = new PointF(600, 30)
                 }, $"{info.Ping}", info.Ping > 100 ? BadPingColor : GoodPingColor));

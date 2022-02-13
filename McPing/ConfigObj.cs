@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace McPing
 {
@@ -14,7 +10,7 @@ namespace McPing
         public bool Check { get; set; }
     }
     class ShowObj
-    { 
+    {
         public string FontNormal { get; set; }
         public string FontEmoji { get; set; }
         public string FontBold { get; set; }
@@ -24,7 +20,7 @@ namespace McPing
         public string BadPingColor { get; set; }
         public string PlayerColor { get; set; }
         public string VersionColor { get; set; }
-        
+
     }
     class ConfigObj
     {
