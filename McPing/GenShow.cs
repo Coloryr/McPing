@@ -1,4 +1,5 @@
-﻿using SixLabors.Fonts;
+﻿using McPing.PingTools;
+using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
@@ -36,7 +37,7 @@ namespace McPing
         public static bool Init()
         {
 
-            PicDir = Program.RunLocal + "PicTemp/";
+            PicDir = $"{Program.RunLocal}{PicName}/";
             if (!Directory.Exists(PicDir))
             {
                 Directory.CreateDirectory(PicDir);
@@ -391,22 +392,22 @@ namespace McPing
             return null;
         }
 
-        private static Color C0 = Color.Parse("#000000");
-        private static Color C1 = Color.Parse("#0000AA");
-        private static Color C2 = Color.Parse("#00AA00");
-        private static Color C3 = Color.Parse("#00AAAA");
-        private static Color C4 = Color.Parse("#AA0000");
-        private static Color C5 = Color.Parse("#AA00AA");
-        private static Color C6 = Color.Parse("#FFAA00");
-        private static Color C7 = Color.Parse("#AAAAAA");
-        private static Color C8 = Color.Parse("#555555");
-        private static Color C9 = Color.Parse("#5555FF");
-        private static Color Ca = Color.Parse("#55FF55");
-        private static Color Cb = Color.Parse("#55FFFF");
-        private static Color Cc = Color.Parse("#FF5555");
-        private static Color Cd = Color.Parse("#FF55FF");
-        private static Color Ce = Color.Parse("#FFFF55");
-        private static Color Cf = Color.Parse("#FFFFFF");
+        private static readonly Color C0 = Color.Parse("#000000");
+        private static readonly Color C1 = Color.Parse("#0000AA");
+        private static readonly Color C2 = Color.Parse("#00AA00");
+        private static readonly Color C3 = Color.Parse("#00AAAA");
+        private static readonly Color C4 = Color.Parse("#AA0000");
+        private static readonly Color C5 = Color.Parse("#AA00AA");
+        private static readonly Color C6 = Color.Parse("#FFAA00");
+        private static readonly Color C7 = Color.Parse("#AAAAAA");
+        private static readonly Color C8 = Color.Parse("#555555");
+        private static readonly Color C9 = Color.Parse("#5555FF");
+        private static readonly Color Ca = Color.Parse("#55FF55");
+        private static readonly Color Cb = Color.Parse("#55FFFF");
+        private static readonly Color Cc = Color.Parse("#FF5555");
+        private static readonly Color Cd = Color.Parse("#FF55FF");
+        private static readonly Color Ce = Color.Parse("#FFFF55");
+        private static readonly Color Cf = Color.Parse("#FFFFFF");
 
         private static bool GetBrush(char color, out Color color1)
         {

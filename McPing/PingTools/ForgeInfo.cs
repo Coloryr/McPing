@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 
-namespace McPing
+namespace McPing.PingTools
 {
     /// <summary>
     /// Contains information about a modded server install.
@@ -37,13 +37,13 @@ namespace McPing
         internal ForgeInfo(JToken data)
         {
 
-            this.Mods = new List<ForgeMod>();
+            Mods = new List<ForgeMod>();
             foreach (JToken mod in data["modList"])
             {
                 string modid = mod["modid"].ToString();
                 string version = mod["version"].ToString();
 
-                this.Mods.Add(new ForgeMod(modid, version));
+                Mods.Add(new ForgeMod(modid, version));
             }
         }
     }

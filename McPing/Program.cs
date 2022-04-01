@@ -1,23 +1,48 @@
 ﻿using ColoryrSDK;
+using McPing.PingTools;
 using Newtonsoft.Json;
 using SixLabors.Fonts;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace McPing
 {
     class Program
     {
-        public const string Version = "1.4.0";
+        public const string Version = "1.5.0";
         public static string RunLocal { get; private set; }
         public static ConfigObj Config { get; private set; }
 
         private static Logs logs;
         private static bool have;
 
-        private static Robot robot = new();
+        private static readonly Robot robot = new();
+
+        private static readonly ConcurrentDictionary<long, int> DelaySave = new();
+        private static Timer timer = new Timer(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+
+        private static void Tick(object sender) 
+        {
+            List<long> remove = new();
+            foreach (var item in DelaySave)
+            {
+                DelaySave.TryUpdate(item.Key, item.Value - 1, item.Value);
+                if (item.Value <= 1)
+                {
+                    remove.Add(item.Key);
+                }
+            }
+
+            foreach (var item in remove)
+            {
+                DelaySave.Remove(item, out var temp);
+            }
+        }
+
         private static void Message(byte type, string data)
         {
             switch (type)
@@ -51,6 +76,11 @@ namespace McPing
                                 SendMessageGroup(pack.id, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
                                 break;
                             }
+                            if (DelaySave.ContainsKey(pack.fid))
+                            {
+                                SendMessageGroup(pack.id, $"查询过于频繁");
+                                break;
+                            }
                             var ip = message[1];
                             if (message.Length > 2)
                             {
@@ -73,6 +103,7 @@ namespace McPing
                             {
                                 Task.Run(async () =>
                                 {
+                                    SendMessageGroup(pack.id, $"正在获取[{ip}]");
                                     string local = await PingUtils.Get(ip);
                                     if (local == null)
                                     {
@@ -84,6 +115,7 @@ namespace McPing
                                     }
                                 });
                             }
+                            DelaySave.TryAdd(pack.fid, Config.Delay);
                         }
                     }
                     break;
@@ -91,25 +123,23 @@ namespace McPing
         }
 
         private static void Log(LogType type, string data)
-            => LogOut($"机器人状态:{type} {data}");
+            => logs.LogOut($"机器人状态:{type} {data}");
 
         private static void State(StateType type)
-            => LogOut($"机器人状态:{type}");
+            => logs.LogOut($"机器人状态:{type}");
 
-        public struct Pairing
+        public record Pairing
         {
+            public string Name { get; }
+            public string Path { get; }
             public Pairing(string name, string path)
             {
-                this.Name = name;
-                this.Path = path;
+                Name = name;
+                Path = path;
             }
-
-            public string Name { get; }
-
-            public string Path { get; }
         }
 
-        static async Task Main(string[] args)
+        static async Task Main()
         {
             Console.WriteLine($"[Main]正在启动McPing {Version}");
             RunLocal = AppContext.BaseDirectory;
@@ -138,7 +168,8 @@ namespace McPing
                     VersionColor = "#8B795E"
                 },
                 Head = "#mc",
-                DefaultIP = ""
+                DefaultIP = "",
+                Delay = 10
             }, RunLocal + "config.json");
 
             have = !string.IsNullOrWhiteSpace(Config.DefaultIP);
@@ -170,10 +201,13 @@ namespace McPing
 
             while (true)
             {
+                if (Config.NoInput)
+                    return;
                 string comm = Console.ReadLine();
                 var arg = comm.Split(' ');
                 if (arg[0] == "stop")
                 {
+                    timer.Dispose();
                     LogOut("正在退出");
                     robot.Stop();
                     return;
@@ -198,8 +232,6 @@ namespace McPing
                             Console.WriteLine($"    {p.Name.PadRight(max)} {p.Path}");
                         }
                     }
-
-
                 }
                 else if (arg[0] == "test")
                 {
@@ -245,11 +277,8 @@ namespace McPing
             => logs.LogError(e);
         public static void LogError(string a)
             => logs.LogError(a);
-
         public static void LogOut(string a)
             => logs.LogOut(a);
-
-
         public static void SendMessageGroup(long group, string message)
         {
             var temp = BuildPack.Build(new SendGroupMessagePack

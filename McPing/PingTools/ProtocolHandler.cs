@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 
-namespace McPing
+namespace McPing.PingTools
 {
     public class ProtocolHandler
     {
@@ -15,7 +15,7 @@ namespace McPing
 
         public ProtocolHandler(TcpClient tcp)
         {
-            this.c = tcp;
+            c = tcp;
         }
 
         public void Receive(byte[] buffer, int start, int offset, SocketFlags f)
@@ -138,7 +138,7 @@ namespace McPing
             while ((paramInt & -128) != 0)
             {
                 bytes.Add((byte)(paramInt & 127 | 128));
-                paramInt = (int)(((uint)paramInt) >> 7);
+                paramInt = (int)((uint)paramInt >> 7);
             }
             bytes.Add((byte)paramInt);
             return bytes.ToArray();

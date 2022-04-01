@@ -30,5 +30,7 @@ namespace McPing
         public long RunQQ { get; set; }
         public string Head { get; set; }
         public string DefaultIP { get; set; }
+        public int Delay { get; set; }
+        public bool NoInput { get; set; }
     }
 }

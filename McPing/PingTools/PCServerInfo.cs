@@ -1,6 +1,4 @@
-﻿using Heijden.Dns.Portable;
-using Heijden.DNS;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,177 +7,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace McPing
+namespace McPing.PingTools
 {
-    class PingUtils
-    {
-        public static Task<string> Get(string IP)
-        {
-            if (IP.Contains(':'))
-            {
-                var temp = IP.LastIndexOf(':') + 1;
-                if (!ushort.TryParse(IP[temp..], out var port))
-                    return null;
-                return Get(IP[0..(temp - 1)], port);
-            }
-            return Get(IP, 25565);
-        }
-        public static Task<string> Get(string IP, string Port)
-        {
-            if (!ushort.TryParse(Port, out var port))
-                return null;
-            return Get(IP, port);
-        }
-        private static async Task<string> Get(string IP, ushort Port)
-        {
-            try
-            {
-                string origin;
-                TcpClient tcp;
-                try
-                {
-                    tcp = new TcpClient()
-                    {
-                        ReceiveTimeout = 5000
-                    };
-                    await tcp.ConnectAsync(IP, Port);
-                    origin = $"{IP}_{Port}";
-                }
-                catch (SocketException)
-                {
-                    origin = IP;
-                    var resolver = new Resolver()
-                    {
-                        Timeout = TimeSpan.FromSeconds(5)
-                    };
-                    var res = await resolver.Query("_minecraft._tcp." + IP, QType.SRV);
-                    if (res?.Answers?.FirstOrDefault()?.RECORD is RecordSRV result)
-                    {
-                        tcp = new TcpClient();
-                        await tcp.ConnectAsync(IP = result.TARGET[..^1], Port = result.PORT);
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }
-                PCServerInfo info = new();
-                if (info.StartGetServerInfo(tcp, IP, Port, origin))
-                {
-                    return GenShow.Gen(info);
-                }
-            }
-            catch
-            {
-
-            }
-
-            try
-            {
-                if (Port == 25565)
-                {
-                    Port = 19132;
-                }
-                var info = new PEServerInfo(IP, Port);
-                if (info.MotdPe())
-                {
-                    return GenShow.Gen(info);
-                }
-            }
-            catch
-            {
-
-            }
-
-            return null;
-        }
-    }
-
-    interface IServerInfo
-    {
-        string IP { get; }
-        byte[] IconData { get; }
-        string MOTD { get; }
-        string GameVersion { get; }
-        int CurrentPlayerCount { get; }
-        int MaxPlayerCount { get; }
-        long Ping { get; }
-    }
-
-    class PEServerInfo : IServerInfo
-    {
-        public string IP { get; private set; }
-        public int Port { get; private set; }
-        public byte[] IconData { get; private set; }
-        public string MOTD { get; private set; }
-        public string GameVersion { get; private set; }
-        public int CurrentPlayerCount { get; private set; }
-        public int MaxPlayerCount { get; private set; }
-        public long Ping { get; private set; }
-
-        private static readonly byte[] msg = new byte[] { 0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78, };
-
-        public PEServerInfo(string ip, int port)
-        {
-            IP = ip;
-            Port = port;
-            IconData = null;
-        }
-
-        public bool MotdPe()
-        {
-            try
-            {
-                byte[] buffer = new byte[1024 * 1024 * 2];
-                Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                var time = Encoding.UTF8.GetBytes(Convert.ToInt32((DateTime.Now - DateTime.Parse("1970-1-1")).TotalSeconds).ToString(), 0, 8).ToList();
-                time.Reverse();
-                var list = new List<byte>
-                {
-                    0x01
-                };
-                list.AddRange(time);
-                list.AddRange(msg);
-
-                Stopwatch pingWatcher = new();
-                pingWatcher.Start();
-                socket.Connect(IP, Port);
-                socket.Send(list.ToArray());
-                int length = socket.Receive(buffer);
-                pingWatcher.Stop();
-
-                var res = Encoding.UTF8.GetString(buffer, 0, length).Split(";");
-
-                int.TryParse(res[4], out int a);
-                CurrentPlayerCount = a;
-                int.TryParse(res[5], out a);
-                MaxPlayerCount = a;
-
-                GameVersion += $"{res[3]} {res[8]}";
-                MOTD = res[1];
-                //("motd", res[1]);
-                //("protocolVersion", res[2]);
-                //("version", res[3]);
-                //("playerCount", res[4]);
-                //("maximumPlayerCount", res[5]);
-                //("subMotd", res[7]);
-                //("gameType", res[8]);
-                //("nintendoLimited", res[9]);
-                //("ipv4Port", res[10]);
-                //("ipv6Port", res[11]);
-                //("rawText", res[12]);
-                Ping = pingWatcher.ElapsedMilliseconds;
-                return true;
-            }
-            catch
-            {
-
-            }
-
-            return false;
-        }
-    }
-
     class PCServerInfo : IServerInfo
     {
         public string IP { get; private set; }
@@ -268,7 +97,7 @@ namespace McPing
                     if (ProtocolHandler.readNextVarInt(packetData) == 0x00) //Read Packet ID
                     {
                         string result = ProtocolHandler.readNextString(packetData); //Get the Json data
-                        this.JsonResult = result;
+                        JsonResult = result;
                         SetInfoFromJsonText(result);
                     }
                 }
@@ -320,7 +149,7 @@ namespace McPing
             return false;
         }
 
-        private string Get(JToken obj)
+        private static string Get(JToken obj)
         {
             string temp = "";
             string text;
@@ -384,17 +213,17 @@ namespace McPing
                     if (jsonData.ContainsKey("players"))
                     {
                         JObject playerData = jsonData["players"] as JObject;
-                        this.MaxPlayerCount = int.Parse(playerData["max"].ToString());
-                        this.CurrentPlayerCount = int.Parse(playerData["online"].ToString());
+                        MaxPlayerCount = int.Parse(playerData["max"].ToString());
+                        CurrentPlayerCount = int.Parse(playerData["online"].ToString());
                         if (playerData.ContainsKey("sample"))
                         {
-                            this.OnlinePlayersName = new List<string>();
+                            OnlinePlayersName = new List<string>();
                             foreach (JObject name in playerData["sample"])
                             {
                                 if (name.ContainsKey("name"))
                                 {
                                     string playername = name["name"].ToString();
-                                    this.OnlinePlayersName.Add(playername);
+                                    OnlinePlayersName.Add(playername);
                                 }
                             }
                         }
@@ -464,7 +293,7 @@ namespace McPing
             }
         }
 
-        private string GetColor(string color)
+        private static string GetColor(string color)
         {
             switch (color)
             {
