@@ -1,46 +1,45 @@
 ﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-namespace McPing
+namespace McPing;
+
+static class Tools
 {
-    class Tools
+    public static Image ZoomImage(Image bitmap, int destHeight, int destWidth)
     {
-        public static Image ZoomImage(Image bitmap, int destHeight, int destWidth)
+        try
         {
-            try
+            int width = 0, height = 0;
+            //按比例缩放             
+            int sourWidth = bitmap.Width;
+            int sourHeight = bitmap.Height;
+            if (sourHeight > destHeight || sourWidth > destWidth)
             {
-                int width = 0, height = 0;
-                //按比例缩放             
-                int sourWidth = bitmap.Width;
-                int sourHeight = bitmap.Height;
-                if (sourHeight > destHeight || sourWidth > destWidth)
+                if (sourWidth * destHeight > sourHeight * destWidth)
                 {
-                    if (sourWidth * destHeight > sourHeight * destWidth)
-                    {
-                        width = destWidth;
-                        height = destWidth * sourHeight / sourWidth;
-                    }
-                    else
-                    {
-                        height = destHeight;
-                        width = sourWidth * destHeight / sourHeight;
-                    }
+                    width = destWidth;
+                    height = destWidth * sourHeight / sourWidth;
                 }
                 else
                 {
-                    width = sourWidth;
-                    height = sourHeight;
+                    height = destHeight;
+                    width = sourWidth * destHeight / sourHeight;
                 }
-                bitmap.Mutate((a) =>
-                {
-                    a.Resize(width, height);
-                });
-                return bitmap;
             }
-            catch
+            else
             {
-                return bitmap;
+                width = sourWidth;
+                height = sourHeight;
             }
+            bitmap.Mutate((a) =>
+            {
+                a.Resize(width, height);
+            });
+            return bitmap;
+        }
+        catch
+        {
+            return bitmap;
         }
     }
 }
