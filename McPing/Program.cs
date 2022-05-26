@@ -196,6 +196,7 @@ class Program
         LogOut("正在连接ColorMirai");
 
         robot.Set(config);
+        robot.SetPipe(new ColorMiraiSocket(robot));
         robot.Start();
 
         while (true)
