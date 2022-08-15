@@ -12,7 +12,7 @@ namespace McPing;
 
 class Program
 {
-    public const string Version = "1.6.0";
+    public const string Version = "1.7.0";
     public static string RunLocal { get; private set; }
     public static ConfigObj Config { get; private set; }
 
@@ -148,7 +148,7 @@ class Program
             Robot = new RobotObj()
             {
                 IP = "127.0.0.1",
-                Port = 23333,
+                Port = 23335,
                 Check = false,
                 Time = 10000
             },
@@ -196,7 +196,7 @@ class Program
         LogOut("正在连接ColorMirai");
 
         robot.Set(config);
-        robot.SetPipe(new ColorMiraiSocket(robot));
+        robot.SetPipe(new ColorMiraiNetty(robot));
         robot.Start();
 
         while (true)
@@ -281,22 +281,11 @@ class Program
         => logs.LogOut(a);
     public static void SendMessageGroup(long group, string message)
     {
-        robot.AddSend(new SendGroupMessagePack
-        {
-            id = group,
-            message = new()
-            {
-                message
-            }
-        }, 52);
+        robot.SendGroupMessage(0, group, new() { message });
     }
 
     public static void SendMessageGroupImg(long group, string local)
     {
-        robot.AddSend(new SendGroupImageFilePack
-        {
-            id = group,
-            file = local
-        }, 75);
+        robot.SendGroupImageFile(0, group, local);
     }
 }
