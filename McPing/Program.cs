@@ -12,7 +12,7 @@ namespace McPing;
 
 class Program
 {
-    public const string Version = "1.7.0";
+    public const string Version = "1.8.0";
     public static string RunLocal { get; private set; }
     public static ConfigObj Config { get; private set; }
 
@@ -22,7 +22,7 @@ class Program
     private static readonly RobotSDK robot = new();
 
     private static readonly ConcurrentDictionary<long, int> DelaySave = new();
-    private static Timer timer = new Timer(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    private static Timer timer = new(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
     private static void Tick(object sender)
     {

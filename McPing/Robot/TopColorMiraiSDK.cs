@@ -25,7 +25,7 @@ public partial class RobotSDK
         public string UUID { get; set; }
     }
     private record QQCall
-    { 
+    {
         public long QQ { get; set; }
         public string UUID { get; set; }
     }
@@ -144,12 +144,12 @@ public partial class RobotSDK
                 return false;
         }
     }
-    private string GenUUID 
-    { 
+    private string GenUUID
+    {
         get
         {
             return Guid.NewGuid().ToString().Replace("-", "").ToLower();
-        } 
+        }
     }
     /// <summary>
     /// 55 [插件]获取群列表
@@ -467,13 +467,17 @@ public partial class RobotSDK
     /// 71 [插件]撤回消息
     /// </summary>
     /// <param name="qq">qq号</param>
-    /// <param name="id">消息ID</param>
-    public void ReCallMessage(long qq, int id)
+    /// <param name="ids1">消息ID</param>
+    /// <param name="ids2">消息ID</param>
+    /// <param name="kind">消息类型</param>
+    public void ReCallMessage(long qq, int[] ids1, int[] ids2, MessageSourceKind kind)
     {
         AddSend(new ReCallMessagePack()
         {
             qq = qq,
-            id = id
+            ids1 = ids1,
+            ids2 = ids2,
+            kind = kind
         }, 71);
     }
 
@@ -485,7 +489,7 @@ public partial class RobotSDK
     /// <param name="file">文件位置</param>
     public void SendGroupImageFile(long qq, long group, string file, List<long> ids = null)
     {
-        ids ??= new(); 
+        ids ??= new();
         AddSend(new SendGroupImageFilePack()
         {
             qq = qq,
@@ -677,16 +681,27 @@ public partial class RobotSDK
     /// <summary>
     /// 94 [插件]设置群精华消息
     /// </summary>
+    /// <param name="pack">消息事件包</param>
+    public void GroupSetEssenceMessage(GroupMessageEventPack pack)
+    {
+        GroupSetEssenceMessage(pack.qq, pack.id, pack.ids1, pack.ids2);
+    }
+
+    /// <summary>
+    /// 94 [插件]设置群精华消息
+    /// </summary>
     /// <param name="qq">qq号</param>
     /// <param name="group">群号</param>
-    /// <param name="mid">消息ID</param>
-    public void GroupSetEssenceMessage(long qq, long group, int mid)
+    /// <param name="ids1">消息ID</param>
+    /// <param name="ids2">消息ID</param>
+    public void GroupSetEssenceMessage(long qq, long group, int[] ids1, int[] ids2)
     {
         AddSend(new GroupSetEssenceMessagePack()
         {
             qq = qq,
             id = group,
-            mid = mid
+            ids1 = ids1,
+            ids2 = ids2
         }, 94);
     }
 
@@ -1122,5 +1137,41 @@ public partial class RobotSDK
             data = data,
             ids = ids
         }, 126);
+    }
+
+    /// <summary>
+    /// 构建一个回复指令
+    /// </summary>
+    /// <param name="pack">群消息数据包</param>
+    /// <returns>指令</returns>
+    public static string BuildQuoteReply(GroupMessageEventPack pack)
+    {
+        return BuildQuoteReply(pack.ids1, pack.ids2);
+    }
+
+    /// <summary>
+    /// 构建一个回复指令
+    /// </summary>
+    /// <param name="pack">朋友消息数据包</param>
+    /// <returns>指令</returns>
+    public static string BuildQuoteReply(FriendMessageEventPack pack)
+    {
+        return BuildQuoteReply(pack.ids1, pack.ids2);
+    }
+
+    public static string BuildQuoteReply(int[] ids1, int[] ids2)
+    {
+        string temp = $"quote:";
+        temp += $"{ids1.Length},";
+        foreach (var item in ids1)
+        {
+            temp += $"{item},";
+        }
+        temp += $"{ids2.Length},";
+        foreach (var item in ids2)
+        {
+            temp += $"{item},";
+        }
+        return temp;
     }
 }
