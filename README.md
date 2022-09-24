@@ -1,6 +1,8 @@
 # McPing 
 一个MC服务器ping插件
 
+**需要配合最新版的ColorMirai**
+
 使用[ColorMirai](https://github.com/Coloryr/ColorMirai)
 
 注：启动前请安装net6
