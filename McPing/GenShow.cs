@@ -1,4 +1,4 @@
-﻿using McPing.PingTools;
+using McPing.PingTools;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -6,6 +6,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -79,11 +80,103 @@ static class GenShow
         return true;
     }
 
-    enum FontState
+    public enum FontState
     {
         normal, bold, italic
     }
     private const string randomString = "0123456789abcdef";
+
+    private static readonly Random _random = new();
+
+    public static void Draw(ref Image image, ref float x, ref float y, bool underline, bool strikethrough,
+        FontState now, Color brush, string data)
+    {
+        FontRectangle res;
+        float x1 = x, y1 = y;
+        switch (now)
+        {
+            default:
+            case FontState.normal:
+                res = TextMeasurer.Measure(data, FontNormalOpt);
+                image.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
+                {
+                    Origin = new PointF(x1, y1)
+                }, data, brush));
+                break;
+            case FontState.bold:
+                res = TextMeasurer.Measure(data, FontBoldOpt);
+                image.Mutate(a => a.DrawText(new TextOptions(FontBoldOpt)
+                {
+                    Origin = new PointF(x1, y1)
+                }, data, brush));
+                break;
+            case FontState.italic:
+                res = TextMeasurer.Measure(data, FontItalicOpt);
+                image.Mutate(a => a.DrawText(new TextOptions(FontItalicOpt)
+                {
+                    Origin = new PointF(x1, y1)
+                }, data, brush));
+                break;
+        }
+        if (underline)
+        {
+            image.Mutate(a => a.DrawLines(brush, 1,
+                new PointF(x1, y1 + 21f), new PointF(x1 + res.Width, y1 + 21f)));
+        }
+        if (strikethrough)
+        {
+            image.Mutate(a => a.DrawLines(brush, 1,
+                new PointF(x1, y1 + 12f), new PointF(x1 + res.Width, y1 + 12f)));
+        }
+
+        x += res.Width;
+    }
+
+    public static void DrawChat(ref Image image, ref float x, ref float y, Chat chat)
+    {
+        if (x > 580)
+            return;
+        if (chat.Text == "\n")
+        {
+            x = 80;
+            y += 20;
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(chat.Text))
+        {
+            string text = chat.Obfuscated ? " " : chat.Text;
+            Color color = chat.Color == null ? Color.White
+                    : FixColor(chat.Color);
+
+            FontState now = FontState.normal;
+            if (chat.Bold)
+            {
+                now = FontState.bold;
+            }
+            if (chat.Italic)
+            {
+                now = FontState.italic;
+            }
+
+            if (chat.Obfuscated)
+            {
+                text = new string((char)_random.Next(33, 126), 1);
+            }
+
+            Draw(ref image, ref x, ref y, chat.Underlined, chat.Strikethrough, now, color, text);
+
+        }
+
+        if (chat.Extra != null)
+        {
+            foreach (var item in chat.Extra)
+            {
+                DrawChat(ref image, ref x, ref y, item);
+            }
+        }
+    }
+
     public static string Gen(IServerInfo info)
     {
         try
@@ -94,14 +187,14 @@ static class GenShow
                 operation.Clear(BackgroundColor);
             });
             Image bitmap1;
-            if (info.IconData == null)
+            if (info.MOTD.FaviconByteArray == null)
             {
                 bitmap1 = new Image<Rgba32>(64, 64);
             }
             else
             {
                 using MemoryStream stream = new();
-                stream.Write(info.IconData);
+                stream.Write(info.MOTD.FaviconByteArray);
                 stream.Seek(0, SeekOrigin.Begin);
                 bitmap1 = Image.Load(stream);
                 bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
@@ -112,141 +205,14 @@ static class GenShow
             });
             bitmap1.Dispose();
 
-            var temp = info.MOTD.Split('\n');
             float y = 10;
             float x = 80;
-            FontRectangle res;
-            Color brush;
-            FontState now;
-            string[] temp1;
-            bool isStart = false;
-            bool underline = false;
-            bool strikethrough = false;
-            foreach (var item in temp)
-            {
-                strikethrough = false;
-                underline = false;
-                x = 80;
-                brush = Color.White;
-                now = FontState.normal;
-                temp1 = item.Split("§");
-                if (item.StartsWith("§"))
-                    isStart = true;
-                foreach (var item2 in temp1)
-                {
-                    if (item2.Length == 0)
-                        continue;
-                    string draw = "";
-                    char color = item2.ToLower()[0];
-
-                    if (!isStart)
-                    {
-                        draw = item2;
-                        isStart = true;
-                    }
-                    else if (color == '#')
-                    {
-                        string color1 = item2[..7];
-                        brush = Color.Parse(color1);
-                        draw = item2[7..];
-                    }
-                    else if (color == 'k')
-                    {
-                        GetBrush(randomString[new Random().Next(randomString.Length - 1)], out brush);
-                    }
-                    else if (color == 'l')
-                    {
-                        now = FontState.bold;
-                        draw = item2[1..];
-                    }
-                    else if (color == 'm')
-                    {
-                        strikethrough = true;
-                        draw = item2[1..];
-                    }
-                    else if (color == 'n')
-                    {
-                        underline = true;
-                        draw = item2[1..];
-                    }
-                    else if (color == 'o')
-                    {
-                        now = FontState.italic;
-                        draw = item2[1..];
-                    }
-                    else if (color == 'r')
-                    {
-                        strikethrough = false;
-                        underline = false;
-                        now = FontState.normal;
-                        brush = Color.White;
-                        draw = item2[1..];
-                    }
-                    else
-                    {
-                        if (!GetBrush(color, out var temp2))
-                        {
-                            draw = item2;
-                        }
-                        else
-                        {
-                            brush = temp2;
-                            draw = item2[1..];
-                        }
-                    }
-
-                    isStart = true;
-
-                    if (draw.Length == 0)
-                    {
-                        continue;
-                    }
-
-                    switch (now)
-                    {
-                        default:
-                        case FontState.normal:
-                            res = TextMeasurer.Measure(draw, FontNormalOpt);
-                            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
-                            {
-                                Origin = new PointF(x, y)
-                            }, draw, brush));
-                            break;
-                        case FontState.bold:
-                            res = TextMeasurer.Measure(draw, FontBoldOpt);
-                            img.Mutate(a => a.DrawText(new TextOptions(FontBoldOpt)
-                            {
-                                Origin = new PointF(x, y)
-                            }, draw, brush));
-                            break;
-                        case FontState.italic:
-                            res = TextMeasurer.Measure(draw, FontItalicOpt);
-                            img.Mutate(a => a.DrawText(new TextOptions(FontItalicOpt)
-                            {
-                                Origin = new PointF(x, y)
-                            }, draw, brush));
-                            break;
-                    }
-
-                    if (underline)
-                    {
-                        img.Mutate(a => a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f)));
-                    }
-                    if (strikethrough)
-                    {
-                        img.Mutate(a => a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f)));
-                    }
-
-                    x += res.Width;
-                    if (x > 580)
-                        break;
-                }
-                y += 20;
-            }
+            
+            DrawChat(ref img, ref x, ref y, info.MOTD.Description);
             y = 50;
             x = 80;
-            string data = $"在线人数:{info.CurrentPlayerCount}/{info.MaxPlayerCount}";
-            res = TextMeasurer.Measure(data, FontItalicOpt);
+            string data = $"在线人数:{info.MOTD.Players.Online}/{info.MOTD.Players.Max}";
+            var res = TextMeasurer.Measure(data, FontItalicOpt);
             img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
             {
                 Origin = new PointF(x, y)
@@ -259,128 +225,19 @@ static class GenShow
                 Origin = new PointF(x, y)
             }, data, VersionColor));
             x += res.Width + 10f;
-            brush = VersionColor;
-            now = FontState.normal;
-            temp1 = ("r" + info.GameVersion).Split("§");
-            if (info.GameVersion.StartsWith("§"))
-                isStart = true;
-            foreach (var item2 in temp1)
-            {
-                if (item2.Length == 0)
-                    continue;
-                char color = item2.ToLower()[0];
-                string draw = "";
 
-                if (!isStart)
-                {
-                    draw = item2;
-                    isStart = true;
-                }
-                else if (color == 'k')
-                {
-                    GetBrush(randomString[new Random().Next(randomString.Length - 1)], out brush);
-                }
-                else if (color == 'l')
-                {
-                    now = FontState.bold;
-                    draw = item2[1..];
-                }
-                else if (color == 'm')
-                {
-                    strikethrough = true;
-                    draw = item2[1..];
-                }
-                else if (color == 'n')
-                {
-                    underline = true;
-                    draw = item2[1..];
-                }
-                else if (color == 'o')
-                {
-                    now = FontState.italic;
-                    draw = item2[1..];
-                }
-                else if (color == 'r')
-                {
-                    strikethrough = false;
-                    underline = false;
-                    now = FontState.normal;
-                    brush = Color.White;
-                    draw = item2[1..];
-                }
-                else
-                {
-                    if (!GetBrush(color, out var temp2))
-                    {
-                        draw = item2;
-                    }
-                    else
-                    {
-                        brush = temp2;
-                        draw = item2[1..];
-                    }
-                }
-                isStart = true;
+            var chat = ServerDescriptionJsonConverter.StringToChar(info.MOTD.Version.Name);
 
-                if (draw.Length == 0)
-                {
-                    continue;
-                }
-
-                switch (now)
-                {
-                    default:
-                    case FontState.normal:
-                        res = TextMeasurer.Measure(draw, FontNormalOpt);
-                        img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
-                        {
-                            Origin = new PointF(x, y)
-                        }, draw, brush));
-                        break;
-                    case FontState.bold:
-                        res = TextMeasurer.Measure(draw, FontBoldOpt);
-                        img.Mutate(a => a.DrawText(new TextOptions(FontBoldOpt)
-                        {
-                            Origin = new PointF(x, y)
-                        }, draw, brush));
-                        break;
-                    case FontState.italic:
-                        res = TextMeasurer.Measure(draw, FontItalicOpt);
-                        img.Mutate(a => a.DrawText(new TextOptions(FontItalicOpt)
-                        {
-                            Origin = new PointF(x, y)
-                        }, draw, brush));
-                        break;
-                }
-
-                if (underline)
-                {
-                    img.Mutate(a => a.DrawLines(brush, 1, new PointF(x, y + 21f), new PointF(x + res.Width, y + 21f)));
-                }
-                if (strikethrough)
-                {
-                    img.Mutate(a => a.DrawLines(brush, 1, new PointF(x, y + 12f), new PointF(x + res.Width, y + 12f)));
-                }
-
-                x += res.Width;
-                if (x > 580)
-                {
-                    img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
-                    {
-                        Origin = new PointF(x, y)
-                    }, "...", VersionColor));
-                }
-            }
-
+            DrawChat(ref img, ref x, ref y, chat);
             img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
             {
                 Origin = new PointF(600, 10)
             }, "Ping", GoodPingColor).DrawText(new TextOptions(FontNormalOpt)
             {
                 Origin = new PointF(600, 30)
-            }, $"{info.Ping}", info.Ping > 100 ? BadPingColor : GoodPingColor));
+            }, $"{info.MOTD.Ping}", info.MOTD.Ping > 100 ? BadPingColor : GoodPingColor));
 
-            string local = PicDir + info.IP + ".png";
+            string local = $"{PicDir}{info.MOTD.ServerAddress}_{info.MOTD.ServerPort}.png";
             img.SaveAsPng(local);
             Program.LogOut("生成图片" + local);
             return local;
@@ -392,78 +249,35 @@ static class GenShow
         return null;
     }
 
-    private static readonly Color C0 = Color.Parse("#000000");
-    private static readonly Color C1 = Color.Parse("#0000AA");
-    private static readonly Color C2 = Color.Parse("#00AA00");
-    private static readonly Color C3 = Color.Parse("#00AAAA");
-    private static readonly Color C4 = Color.Parse("#AA0000");
-    private static readonly Color C5 = Color.Parse("#AA00AA");
-    private static readonly Color C6 = Color.Parse("#FFAA00");
-    private static readonly Color C7 = Color.Parse("#AAAAAA");
-    private static readonly Color C8 = Color.Parse("#555555");
-    private static readonly Color C9 = Color.Parse("#5555FF");
-    private static readonly Color Ca = Color.Parse("#55FF55");
-    private static readonly Color Cb = Color.Parse("#55FFFF");
-    private static readonly Color Cc = Color.Parse("#FF5555");
-    private static readonly Color Cd = Color.Parse("#FF55FF");
-    private static readonly Color Ce = Color.Parse("#FFFF55");
-    private static readonly Color Cf = Color.Parse("#FFFFFF");
-
-    private static bool GetBrush(char color, out Color color1)
+    private readonly static Dictionary<string, Color> ColorMap = new()
     {
-        switch (color)
+        { "black", Color.Parse("#000000") },
+        { "dark_blue", Color.Parse("#0000AA") },
+        { "dark_green", Color.Parse("#00AA00") },
+        { "dark_aqua", Color.Parse("#00AAAA") },
+        { "dark_red", Color.Parse("#AA0000") },
+        { "dark_purple", Color.Parse("#AA00AA") },
+        { "gold", Color.Parse("#FFAA00") },
+        { "gray", Color.Parse("#AAAAAA") },
+        { "dark_gray", Color.Parse("#555555") },
+        { "blue", Color.Parse("#5555FF") },
+        { "green", Color.Parse("#55FF55") },
+        { "aqua", Color.Parse("#55FFFF") },
+        { "red", Color.Parse("#FF5555") },
+        { "light_purple", Color.Parse("#FF55FF") },
+        { "yellow", Color.Parse("#FFFF55") },
+        { "white", Color.Parse("#FFFFFF") }
+    };
+
+    private static Color FixColor(string color)
+    {
+        if (color.StartsWith('#'))
+            return Color.Parse(color);
+        if (ColorMap.TryGetValue(color, out var color1))
         {
-            case '0':
-                color1 = C0;
-                return true;
-            case '1':
-                color1 = C1;
-                return true;
-            case '2':
-                color1 = C2;
-                return true;
-            case '3':
-                color1 = C3;
-                return true;
-            case '4':
-                color1 = C4;
-                return true;
-            case '5':
-                color1 = C5;
-                return true;
-            case '6':
-                color1 = C6;
-                return true;
-            case '7':
-                color1 = C7;
-                return true;
-            case '8':
-                color1 = C8;
-                return true;
-            case '9':
-                color1 = C9;
-                return true;
-            case 'a':
-                color1 = Ca;
-                return true;
-            case 'b':
-                color1 = Cb;
-                return true;
-            case 'c':
-                color1 = Cc;
-                return true;
-            case 'd':
-                color1 = Cd;
-                return true;
-            case 'e':
-                color1 = Ce;
-                return true;
-            case 'f':
-                color1 = Cf;
-                return true;
-            default:
-                color1 = Cf;
-                return false;
+            return color1;
         }
+
+        return Color.White;
     }
 }

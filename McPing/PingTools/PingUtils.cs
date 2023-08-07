@@ -30,7 +30,6 @@ class PingUtils
     {
         try
         {
-            string origin;
             TcpClient tcp;
             try
             {
@@ -39,11 +38,9 @@ class PingUtils
                     ReceiveTimeout = 5000
                 };
                 await tcp.ConnectAsync(IP, Port);
-                origin = $"{IP}_{Port}";
             }
             catch (SocketException)
             {
-                origin = IP;
                 var resolver = new Resolver()
                 {
                     Timeout = TimeSpan.FromSeconds(5)
@@ -63,7 +60,7 @@ class PingUtils
                 }
             }
             PCServerInfo info = new();
-            if (info.StartGetServerInfo(tcp, IP, Port, origin))
+            if (info.StartGetServerInfo(tcp, IP, Port))
             {
                 return GenShow.Gen(info);
             }
