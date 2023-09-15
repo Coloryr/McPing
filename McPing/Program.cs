@@ -13,7 +13,7 @@ namespace McPing;
 
 static class Program
 {
-    public const string Version = "1.8.2";
+    public const string Version = "1.8.4";
     public static string RunLocal { get; private set; }
     public static ConfigObj Config { get; private set; }
 
@@ -141,7 +141,6 @@ static class Program
 
     static async Task Main()
     {
-        Console.Beep();
         Console.WriteLine($"[Main]正在启动McPing {Version}");
         RunLocal = AppContext.BaseDirectory;
         logs = new Logs(RunLocal);

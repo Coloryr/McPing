@@ -28,9 +28,9 @@ class PingUtils
     }
     private static async Task<string> Get(string IP, ushort Port)
     {
+        TcpClient tcp = null;
         try
         {
-            TcpClient tcp;
             try
             {
                 tcp = new TcpClient()
@@ -65,9 +65,9 @@ class PingUtils
                 return GenShow.Gen(info);
             }
         }
-        catch
+        finally
         {
-
+            tcp?.Dispose();
         }
 
         try

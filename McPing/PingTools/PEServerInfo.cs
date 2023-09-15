@@ -30,7 +30,7 @@ public class PEServerInfo : IServerInfo
         try
         {
             byte[] buffer = new byte[1024 * 1024 * 2];
-            Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            using Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             var time = Encoding.UTF8.GetBytes(Convert.ToInt32((DateTime.Now - DateTime.Parse("1970-1-1")).TotalSeconds).ToString(), 0, 8).ToList();
             time.Reverse();
             var list = new List<byte>

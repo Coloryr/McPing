@@ -38,7 +38,7 @@ public class ServerDescriptionJsonConverter : JsonConverter<Chat>
                 var char1 = item[a];
                 if (char1 == '§' && mode == false)
                 {
-                    if (!string.IsNullOrWhiteSpace(chat1.Text))
+                    if (!string.IsNullOrEmpty(chat1.Text))
                     {
                         chat.Extra.Add(chat1);
                     }

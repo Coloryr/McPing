@@ -84,7 +84,6 @@ static class GenShow
     {
         normal, bold, italic
     }
-    private const string randomString = "0123456789abcdef";
 
     private static readonly Random _random = new();
 
@@ -143,7 +142,7 @@ static class GenShow
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(chat.Text))
+        if (!string.IsNullOrEmpty(chat.Text))
         {
             string text = chat.Obfuscated ? " " : chat.Text;
             Color color = chat.Color == null ? Color.White

@@ -19,7 +19,7 @@ public class PCServerInfo : IServerInfo
     /// <summary>
     /// 获取此次连接服务器的延迟(ms)
     /// </summary>
-    public long Ping { get; private set; }
+    public long Ping { get; private set; } = 999;
 
     /// <summary>
     /// Icon DATA
@@ -62,6 +62,12 @@ public class PCServerInfo : IServerInfo
                 {
                     string result = ProtocolHandler.readNextString(packetData); //Get the Json data
                     JsonConvert.PopulateObject(result, MOTD);
+
+                    if (!string.IsNullOrEmpty(MOTD.Description.Text) 
+                        && MOTD.Description.Extra == null && MOTD.Description.Text.Contains('§'))
+                    {
+                        MOTD.Description = ServerDescriptionJsonConverter.StringToChar(MOTD.Description.Text);
+                    }
                 }
             }
 
