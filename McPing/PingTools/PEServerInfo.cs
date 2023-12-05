@@ -7,7 +7,7 @@ using System.Text;
 
 namespace McPing.PingTools;
 
-public class PEServerInfo : IServerInfo
+public class PEServerInfo(string ip, int port) : IServerInfo
 {
     public byte[] IconData { get; private set; }
     public string str { get; private set; }
@@ -16,21 +16,16 @@ public class PEServerInfo : IServerInfo
     public int MaxPlayerCount { get; private set; }
     public long Ping { get; private set; }
 
-    public ServerMotdObj MOTD  { get; private set; }
+    public ServerMotdObj MOTD { get; private set; } = new(ip, port);
 
-    private static readonly byte[] msg = new byte[] { 0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78, };
-
-    public PEServerInfo(string ip, int port)
-    {
-        MOTD = new(ip, port);
-    }
+    private static readonly byte[] msg = [0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78,];
 
     public bool MotdPe()
     {
         try
         {
             byte[] buffer = new byte[1024 * 1024 * 2];
-            using Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             var time = Encoding.UTF8.GetBytes(Convert.ToInt32((DateTime.Now - DateTime.Parse("1970-1-1")).TotalSeconds).ToString(), 0, 8).ToList();
             time.Reverse();
             var list = new List<byte>
@@ -52,9 +47,9 @@ public class PEServerInfo : IServerInfo
             var res = Encoding.UTF8.GetString(buffer, 0, length).Split(";");
 
             MOTD.Players = new();
-            int.TryParse(res[4], out int a);
+            _ = int.TryParse(res[4], out int a);
             MOTD.Players.Online = a;
-            int.TryParse(res[5], out a);
+            _ = int.TryParse(res[5], out a);
             MOTD.Players.Max = a;
 
             MOTD.Version = new()

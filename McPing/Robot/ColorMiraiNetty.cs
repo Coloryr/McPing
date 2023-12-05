@@ -1793,7 +1793,7 @@ internal static class PackEncode
 
         return buff;
     }
-    public static IByteBuffer ToPack(this GroupMemberEditSpecialTitlePack pack) 
+    public static IByteBuffer ToPack(this GroupMemberEditSpecialTitlePack pack)
     {
         IByteBuffer buff = Unpooled.Buffer();
         buff.WriteLong(pack.qq)

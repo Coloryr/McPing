@@ -35,12 +35,15 @@ class PingUtils
             {
                 tcp = new TcpClient()
                 {
-                    ReceiveTimeout = 5000
+                    ReceiveTimeout = 5000,
+                    SendTimeout = 5000
                 };
                 await tcp.ConnectAsync(IP, Port);
             }
             catch (SocketException)
             {
+                tcp.Close();
+                tcp.Dispose();
                 var resolver = new Resolver()
                 {
                     Timeout = TimeSpan.FromSeconds(5)
@@ -50,9 +53,17 @@ class PingUtils
                 {
                     tcp = new TcpClient()
                     {
-                        ReceiveTimeout = 5000
+                        ReceiveTimeout = 5000,
+                        SendTimeout = 5000
                     };
-                    await tcp.ConnectAsync(IP = result.TARGET[..^1], Port = result.PORT);
+                    try
+                    {
+                        await tcp.ConnectAsync(IP = result.TARGET[..^1], Port = result.PORT);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
                 }
                 else
                 {
@@ -67,6 +78,7 @@ class PingUtils
         }
         finally
         {
+            tcp?.Close();
             tcp?.Dispose();
         }
 

@@ -6,7 +6,6 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -206,7 +205,7 @@ static class GenShow
 
             float y = 10;
             float x = 80;
-            
+
             DrawChat(ref img, ref x, ref y, info.MOTD.Description);
             y = 50;
             x = 80;

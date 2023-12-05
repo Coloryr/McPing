@@ -1,10 +1,4 @@
-using Heijden.Dns.Portable;
-using Heijden.DNS;
-using McPing.PingTools;
-using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net.Sockets;
 using System.Text;
 
 namespace McPing.PingTools;

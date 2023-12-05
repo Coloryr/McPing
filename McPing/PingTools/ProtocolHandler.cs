@@ -6,24 +6,14 @@ using System.Text;
 
 namespace McPing.PingTools;
 
-public class ProtocolHandler
+public class ProtocolHandler(TcpClient tcp)
 {
-    /// <summary>
-    /// 实例中全局TCP客户端
-    /// </summary>
-    public TcpClient c { get; set; }
-
-    public ProtocolHandler(TcpClient tcp)
-    {
-        c = tcp;
-    }
-
     public void Receive(byte[] buffer, int start, int offset, SocketFlags f)
     {
         int read = 0;
         while (read < offset)
         {
-            read += c.Client.Receive(buffer, start + read, offset - read, f);
+            read += tcp.Client.Receive(buffer, start + read, offset - read, f);
         }
     }
 
@@ -33,7 +23,7 @@ public class ProtocolHandler
     /// <param name="offset">Amount of bytes to read</param>
     /// <param name="cache">Cache of bytes to read from</param>
     /// <returns>The data read from the cache as an array</returns>
-    private static byte[] readData(int offset, List<byte> cache)
+    private static byte[] ReadData(int offset, List<byte> cache)
     {
         byte[] result = cache.Take(offset).ToArray();
         cache.RemoveRange(0, offset);
@@ -45,35 +35,30 @@ public class ProtocolHandler
     /// </summary>
     /// <param name="offset">Amount of bytes to read</param>
     /// <returns>The data read from the network as an array</returns>
-    public byte[] readDataRAW(int offset)
+    public byte[] ReadDataRAW(int offset)
     {
         if (offset > 0)
         {
-            try
-            {
-                byte[] cache = new byte[offset];
-                Receive(cache, 0, offset, SocketFlags.None);
-                return cache;
-            }
-            catch (OutOfMemoryException) { }
+            byte[] cache = new byte[offset];
+            Receive(cache, 0, offset, SocketFlags.None);
+            return cache;
         }
-        return new byte[] { };
+        return [];
     }
 
     /// <summary>
     /// Read an integer from the network
     /// </summary>
     /// <returns>The integer</returns>
-    public int readNextVarIntRAW()
+    public int ReadNextVarIntRAW()
     {
         int i = 0;
         int j = 0;
-        int k = 0;
         byte[] tmp = new byte[1];
         while (true)
         {
             Receive(tmp, 0, 1, SocketFlags.None);
-            k = tmp[0];
+            int k = tmp[0];
             i |= (k & 0x7F) << j++ * 7;
             if (j > 5) throw new OverflowException("VarInt too big");
             if ((k & 0x80) != 128) break;
@@ -85,7 +70,7 @@ public class ProtocolHandler
     /// Read a single byte from a cache of bytes and remove it from the cache
     /// </summary>
     /// <returns>The byte that was read</returns>
-    public static byte readNextByte(List<byte> cache)
+    public static byte ReadNextByte(List<byte> cache)
     {
         byte result = cache[0];
         cache.RemoveAt(0);
@@ -97,14 +82,13 @@ public class ProtocolHandler
     /// </summary>
     /// <param name="cache">Cache of bytes to read from</param>
     /// <returns>The integer</returns>
-    public static int readNextVarInt(List<byte> cache)
+    public static int ReadNextVarInt(List<byte> cache)
     {
         int i = 0;
         int j = 0;
-        int k = 0;
         while (true)
         {
-            k = readNextByte(cache);
+            int k = ReadNextByte(cache);
             i |= (k & 0x7F) << j++ * 7;
             if (j > 5) throw new OverflowException("VarInt too big");
             if ((k & 0x80) != 128) break;
@@ -117,12 +101,12 @@ public class ProtocolHandler
     /// </summary>
     /// <param name="cache">Cache of bytes to read from</param>
     /// <returns>The string</returns>
-    public static string readNextString(List<byte> cache)
+    public static string ReadNextString(List<byte> cache)
     {
-        int length = readNextVarInt(cache);
+        int length = ReadNextVarInt(cache);
         if (length > 0)
         {
-            return Encoding.UTF8.GetString(readData(length, cache));
+            return Encoding.UTF8.GetString(ReadData(length, cache));
         }
         else return "";
     }
@@ -132,16 +116,16 @@ public class ProtocolHandler
     /// </summary>
     /// <param name="paramInt">Integer to encode</param>
     /// <returns>Byte array for this integer</returns>
-    public static byte[] getVarInt(int paramInt)
+    public static byte[] GetVarInt(int paramInt)
     {
-        List<byte> bytes = new List<byte>();
+        List<byte> bytes = [];
         while ((paramInt & -128) != 0)
         {
             bytes.Add((byte)(paramInt & 127 | 128));
             paramInt = (int)((uint)paramInt >> 7);
         }
         bytes.Add((byte)paramInt);
-        return bytes.ToArray();
+        return [.. bytes];
     }
 
     /// <summary>
@@ -149,11 +133,11 @@ public class ProtocolHandler
     /// </summary>
     /// <param name="bytes">Bytes to append</param>
     /// <returns>Array containing all the data</returns>
-    public static byte[] concatBytes(params byte[][] bytes)
+    public static byte[] ConcatBytes(params byte[][] bytes)
     {
-        List<byte> result = new List<byte>();
+        List<byte> result = [];
         foreach (byte[] array in bytes)
             result.AddRange(array);
-        return result.ToArray();
+        return [.. result];
     }
 }

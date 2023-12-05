@@ -2,9 +2,6 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace McPing.PingTools;
 
@@ -26,7 +23,7 @@ public class ServerDescriptionJsonConverter : JsonConverter<Chat>
         var lines = str1.Split("\n");
         var chat = new Chat()
         {
-            Extra = new()
+            Extra = []
         };
 
         foreach (var item in lines)
@@ -119,7 +116,7 @@ public class ServerDescriptionJsonConverter : JsonConverter<Chat>
         }
         else
         {
-            JObject obj = JObject.Load(reader);
+            var obj = JObject.Load(reader);
             Chat chat = new();
             serializer.Populate(obj.CreateReader(), chat);
             return chat;
@@ -206,19 +203,19 @@ public record Mod
     public string Version { get; set; }
 }
 
-public class ServerMotdObj
+public class ServerMotdObj(string ip, int port)
 {
     /// <summary>
     /// Server's address, support srv.
     /// </summary>
     [JsonIgnore]
-    public string ServerAddress { get; set; }
+    public string ServerAddress { get; set; } = ip;
 
     /// <summary>
     /// Server's runing port
     /// </summary>
     [JsonIgnore]
-    public int ServerPort { get; set; }
+    public int ServerPort { get; set; } = port;
 
     /// <summary>
     /// The server's name, it's used to display server name in ui.
@@ -248,7 +245,7 @@ public class ServerMotdObj
     /// server's favicon. is a png image that is base64 encoded
     /// </summary>
     [JsonProperty("favicon")]
-    public string Favicon { get; set; }
+    public string Favicon { get; set; } = "data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
     /// <summary>
     /// Server's mod info including mod type and mod list (if is avaliable)
@@ -279,11 +276,4 @@ public class ServerMotdObj
 
     [JsonIgnore]
     public bool AcceptTextures { get; set; }
-
-    public ServerMotdObj(string ip, int port)
-    {
-        ServerAddress = ip;
-        ServerPort = port;
-        Favicon = "data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-    }
 }

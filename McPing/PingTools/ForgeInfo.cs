@@ -11,16 +11,10 @@ public class ForgeInfo
     /// <summary>
     /// Represents an individual forge mod.
     /// </summary>
-    public class ForgeMod
+    public class ForgeMod(string ModID, string Version)
     {
-        public ForgeMod(string ModID, string Version)
-        {
-            this.ModID = ModID;
-            this.Version = Version;
-        }
-
-        public readonly string ModID;
-        public readonly string Version;
+        public readonly string ModID = ModID;
+        public readonly string Version = Version;
 
         public override string ToString()
         {
@@ -36,8 +30,7 @@ public class ForgeInfo
     /// <param name="data">The modinfo JSON tag.</param>
     internal ForgeInfo(JToken data)
     {
-
-        Mods = new List<ForgeMod>();
+        Mods = [];
         foreach (JToken mod in data["modList"])
         {
             string modid = mod["modid"].ToString();

@@ -53,7 +53,7 @@ public partial class RobotSDK
             case 0:
                 {
                     var pack = data as ReMessagePack;
-                    if (!string.IsNullOrWhiteSpace(pack.uuid) 
+                    if (!string.IsNullOrWhiteSpace(pack.uuid)
                         && UUIDs.TryGetValue(pack.uuid, out var call))
                     {
                         //TODO 是否要产生回调
@@ -98,7 +98,7 @@ public partial class RobotSDK
             case 57:
                 {
                     var pack = data as ReListMemberPack;
-                    if (UUIDs.TryGetValue(pack.uuid, out var key) && 
+                    if (UUIDs.TryGetValue(pack.uuid, out var key) &&
                         GetMembersMap.Remove(key as QQGroup, out var action))
                     {
                         action(pack);
@@ -108,7 +108,7 @@ public partial class RobotSDK
             case 58:
                 {
                     var pack = data as ReGroupSettingPack;
-                    if (UUIDs.TryGetValue(pack.uuid, out var key) && 
+                    if (UUIDs.TryGetValue(pack.uuid, out var key) &&
                         GetGroupSettingMap.Remove(key as QQGroup, out var action))
                     {
                         action(pack);
@@ -127,7 +127,7 @@ public partial class RobotSDK
             case 91:
                 {
                     var pack = data as ReMemberInfoPack;
-                    if (UUIDs.TryGetValue(pack.uuid, out var key) && 
+                    if (UUIDs.TryGetValue(pack.uuid, out var key) &&
                         GetMemberInfoMap.Remove(key as QQMember, out var action))
                     {
                         action(pack);
@@ -137,7 +137,7 @@ public partial class RobotSDK
             case 92:
                 {
                     var pack = data as ReFriendInfoPack;
-                    if (UUIDs.TryGetValue(pack.uuid, out var key) && 
+                    if (UUIDs.TryGetValue(pack.uuid, out var key) &&
                         GetFriendInfoMap.Remove(key as QQFriend, out var action))
                     {
                         action(pack);
@@ -147,7 +147,7 @@ public partial class RobotSDK
             case 101:
                 {
                     var pack = data as ReGroupFilesPack;
-                    if (UUIDs.TryGetValue(pack.uuid, out var key) && 
+                    if (UUIDs.TryGetValue(pack.uuid, out var key) &&
                         GetGroupFilesMap.Remove(key as QQGroup, out var action))
                     {
                         action(pack);
@@ -157,7 +157,7 @@ public partial class RobotSDK
             case 109:
                 {
                     var pack = data as ReGroupAnnouncementsPack;
-                    if (UUIDs.TryGetValue(pack.uuid, out var key) && 
+                    if (UUIDs.TryGetValue(pack.uuid, out var key) &&
                         GetGroupAnnouncementsMap.Remove(key as QQGroup, out var action))
                     {
                         action(pack);
@@ -167,7 +167,7 @@ public partial class RobotSDK
             case 128:
                 {
                     var pack = data as ReFriendGroupPack;
-                    if (UUIDs.TryGetValue(pack.uuid, out var key) && 
+                    if (UUIDs.TryGetValue(pack.uuid, out var key) &&
                         GetFriendGroupMap.Remove(key as QQFriend, out var action))
                     {
                         action(pack);
@@ -177,7 +177,7 @@ public partial class RobotSDK
             case 129:
                 {
                     var pack = data as ReListFriendGroupPack;
-                    if (UUIDs.TryGetValue(pack.uuid, out var key) && 
+                    if (UUIDs.TryGetValue(pack.uuid, out var key) &&
                         GetFriendGroupsMap.Remove(key, out var action))
                     {
                         action(pack);
@@ -1305,7 +1305,7 @@ public partial class RobotSDK
     /// <param name="id">群号</param>
     /// <param name="fid">群员号</param>
     /// <param name="name">头衔</param>
-    public void GroupMemberSetSpecialTitle(long qq, long id, long fid, string name) 
+    public void GroupMemberSetSpecialTitle(long qq, long id, long fid, string name)
     {
         AddSend(new GroupMemberEditSpecialTitlePack()
         {
