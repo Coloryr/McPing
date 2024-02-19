@@ -268,6 +268,6 @@ static class Program
 
     public static void SendMessageGroupImg(long group, string local)
     {
-        RobotCore.SendGroupMessage(group, [$"[CQ:image,file=file:///{local}]"]);
+        RobotCore.SendGroupMessage(group, [$"[CQ:image,file=file://{local}]"]);
     }
 }
