@@ -20,9 +20,9 @@ static class GenShow
     private static Font FontBold;
     private static Font FontItalic;
 
-    private static TextOptions FontNormalOpt;
-    private static TextOptions FontBoldOpt;
-    private static TextOptions FontItalicOpt;
+    private static RichTextOptions FontNormalOpt;
+    private static RichTextOptions FontBoldOpt;
+    private static RichTextOptions FontItalicOpt;
 
     private static Color BackgroundColor;
     private static Color GoodPingColor;
@@ -55,19 +55,19 @@ static class GenShow
         FontBold = temp1.CreateFont(Size, FontStyle.Bold);
         FontItalic = temp2.CreateFont(Size, FontStyle.Italic);
 
-        FontNormalOpt = new TextOptions(FontNormal)
+        FontNormalOpt = new RichTextOptions(FontNormal)
         {
-            FallbackFontFamilies = new List<FontFamily>() { FontEmoji }
+            FallbackFontFamilies = [FontEmoji]
         };
 
-        FontBoldOpt = new TextOptions(FontBold)
+        FontBoldOpt = new RichTextOptions(FontBold)
         {
-            FallbackFontFamilies = new List<FontFamily>() { FontEmoji }
+            FallbackFontFamilies = [FontEmoji]
         };
 
-        FontItalicOpt = new TextOptions(FontItalic)
+        FontItalicOpt = new RichTextOptions(FontItalic)
         {
-            FallbackFontFamilies = new List<FontFamily>() { FontEmoji }
+            FallbackFontFamilies = [FontEmoji]
         };
 
         BackgroundColor = Color.Parse(Program.Config.Show.BGColor);
@@ -95,22 +95,22 @@ static class GenShow
         {
             default:
             case FontState.normal:
-                res = TextMeasurer.Measure(data, FontNormalOpt);
-                image.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
+                res = TextMeasurer.MeasureSize(data, FontNormalOpt);
+                image.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
                 {
                     Origin = new PointF(x1, y1)
                 }, data, brush));
                 break;
             case FontState.bold:
-                res = TextMeasurer.Measure(data, FontBoldOpt);
-                image.Mutate(a => a.DrawText(new TextOptions(FontBoldOpt)
+                res = TextMeasurer.MeasureSize(data, FontBoldOpt);
+                image.Mutate(a => a.DrawText(new RichTextOptions(FontBoldOpt)
                 {
                     Origin = new PointF(x1, y1)
                 }, data, brush));
                 break;
             case FontState.italic:
-                res = TextMeasurer.Measure(data, FontItalicOpt);
-                image.Mutate(a => a.DrawText(new TextOptions(FontItalicOpt)
+                res = TextMeasurer.MeasureSize(data, FontItalicOpt);
+                image.Mutate(a => a.DrawText(new RichTextOptions(FontItalicOpt)
                 {
                     Origin = new PointF(x1, y1)
                 }, data, brush));
@@ -118,12 +118,12 @@ static class GenShow
         }
         if (underline)
         {
-            image.Mutate(a => a.DrawLines(brush, 1,
+            image.Mutate(a => a.DrawLine(brush, 1,
                 new PointF(x1, y1 + 21f), new PointF(x1 + res.Width, y1 + 21f)));
         }
         if (strikethrough)
         {
-            image.Mutate(a => a.DrawLines(brush, 1,
+            image.Mutate(a => a.DrawLine(brush, 1,
                 new PointF(x1, y1 + 12f), new PointF(x1 + res.Width, y1 + 12f)));
         }
 
@@ -210,15 +210,15 @@ static class GenShow
             y = 50;
             x = 80;
             string data = $"在线人数:{info.MOTD.Players.Online}/{info.MOTD.Players.Max}";
-            var res = TextMeasurer.Measure(data, FontItalicOpt);
-            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
+            var res = TextMeasurer.MeasureSize(data, FontItalicOpt);
+            img.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
             {
                 Origin = new PointF(x, y)
             }, data, PlayerColor));
             x += res.Width + 10f;
             data = $"服务器版本:";
-            res = TextMeasurer.Measure(data, FontItalicOpt);
-            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
+            res = TextMeasurer.MeasureSize(data, FontItalicOpt);
+            img.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
             {
                 Origin = new PointF(x, y)
             }, data, VersionColor));
@@ -227,10 +227,10 @@ static class GenShow
             var chat = ServerDescriptionJsonConverter.StringToChar(info.MOTD.Version.Name);
 
             DrawChat(ref img, ref x, ref y, chat);
-            img.Mutate(a => a.DrawText(new TextOptions(FontNormalOpt)
+            img.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
             {
                 Origin = new PointF(600, 10)
-            }, "Ping", GoodPingColor).DrawText(new TextOptions(FontNormalOpt)
+            }, "Ping", GoodPingColor).DrawText(new RichTextOptions(FontNormalOpt)
             {
                 Origin = new PointF(600, 30)
             }, $"{info.MOTD.Ping}", info.MOTD.Ping > 100 ? BadPingColor : GoodPingColor));

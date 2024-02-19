@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,7 +6,7 @@
     <Platforms>AnyCPU;x64</Platforms>
     <DebugType>embedded</DebugType>
     <BaseOutputPath>..\build_out</BaseOutputPath>
-    <AssemblyVersion>1.5.0</AssemblyVersion>
+    <AssemblyVersion>1.6.0</AssemblyVersion>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
@@ -15,16 +15,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DotNetty.Buffers" Version="0.7.5" />
-    <PackageReference Include="DotNetty.Codecs" Version="0.7.5" />
-    <PackageReference Include="DotNetty.Common" Version="0.7.5" />
-    <PackageReference Include="DotNetty.Handlers" Version="0.7.5" />
-    <PackageReference Include="DotNetty.Transport" Version="0.7.5" />
     <PackageReference Include="Heijden.Dns.Portable" Version="2.0.19" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta19" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta15" />
+    <PackageReference Include="SixLabors.Fonts" Version="2.0.2" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.2" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.1" />
+	<PackageReference Include="Websocket.Client" Version="5.1.1" />
   </ItemGroup>
 
 </Project>

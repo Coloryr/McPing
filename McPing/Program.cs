@@ -1,5 +1,5 @@
-﻿using ColoryrSDK;
-using McPing.PingTools;
+﻿using McPing.PingTools;
+using McPing.Robot;
 using SixLabors.Fonts;
 using System;
 using System.Collections.Concurrent;
@@ -7,20 +7,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using StateType = ColoryrSDK.StateType;
 
 namespace McPing;
 
 static class Program
 {
-    public const string Version = "1.8.4";
+    public const string Version = "1.9.0";
     public static string RunLocal { get; private set; }
     public static ConfigObj Config { get; private set; }
 
     private static Logs logs;
     private static bool have;
-
-    private static readonly RobotSDK robot = new();
 
     private static readonly ConcurrentDictionary<long, int> DelaySave = new();
     private static Timer timer = new(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
@@ -43,90 +40,94 @@ static class Program
         }
     }
 
-    private static void Message(int type, object data)
+    public static void Message(GroupMessagePack pack)
     {
-        switch (type)
+        if (Config.Group.Contains(pack.group_id))
         {
-            case 49:
-                var pack = data as GroupMessageEventPack;
-                if (Config.Group.Contains(pack.id))
+            if (pack.message[0].type != "text")
+            {
+                return;
+            }
+            var message = pack.message[0].data.text.Split(' ');
+            if (message[0] == Config.Head)
+            {
+                if (have)
                 {
-                    var message = pack.message[^1].Split(' ');
-                    if (message[0] == Config.Head)
+                    Task.Run(async () =>
                     {
-                        if (have)
+                        SendMessageGroup(pack.group_id, $"正在获取[{Config.DefaultIP}]");
+                        string local = await PingUtils.Get(Config.DefaultIP);
+                        if (local == null)
                         {
-                            Task.Run(async () =>
-                            {
-                                SendMessageGroup(pack.id, $"正在获取[{Config.DefaultIP}]");
-                                string local = await PingUtils.Get(Config.DefaultIP);
-                                if (local == null)
-                                {
-                                    SendMessageGroup(pack.id, $"获取[{Config.DefaultIP}]错误");
-                                }
-                                else
-                                {
-                                    SendMessageGroupImg(pack.id, local);
-                                }
-                            });
-                            break;
-                        }
-                        if (message.Length == 1)
-                        {
-                            SendMessageGroup(pack.id, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
-                            break;
-                        }
-                        if (DelaySave.ContainsKey(pack.fid))
-                        {
-                            SendMessageGroup(pack.id, $"查询过于频繁");
-                            break;
-                        }
-                        var ip = message[1];
-                        if (message.Length > 2)
-                        {
-                            var port = message[2];
-                            Task.Run(async () =>
-                            {
-                                SendMessageGroup(pack.id, $"正在获取[{ip}:{port}]");
-                                string local = await PingUtils.Get(ip, port);
-                                if (local == null)
-                                {
-                                    SendMessageGroup(pack.id, $"获取[{ip}:{port}]错误");
-                                }
-                                else
-                                {
-                                    SendMessageGroupImg(pack.id, local);
-                                }
-                            });
+                            SendMessageGroup(pack.group_id, $"获取[{Config.DefaultIP}]错误");
                         }
                         else
                         {
-                            Task.Run(async () =>
-                            {
-                                SendMessageGroup(pack.id, $"正在获取[{ip}]");
-                                string local = await PingUtils.Get(ip);
-                                if (local == null)
-                                {
-                                    SendMessageGroup(pack.id, $"获取[{ip}]错误");
-                                }
-                                else
-                                {
-                                    SendMessageGroupImg(pack.id, local);
-                                }
-                            });
+                            SendMessageGroupImg(pack.group_id, local);
                         }
-                        DelaySave.TryAdd(pack.fid, Config.Delay);
+                    });
+                    return;
+                }
+                if (message.Length == 1)
+                {
+                    SendMessageGroup(pack.group_id, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
+                    return;
+                }
+                if (DelaySave.ContainsKey(pack.user_id))
+                {
+                    SendMessageGroup(pack.group_id, $"查询过于频繁");
+                    return;
+                }
+                var ip = message[1];
+                if (message.Length == 3)
+                {
+                    var port = message[2];
+                    if (string.IsNullOrWhiteSpace(ip))
+                    {
+                        Get(pack.group_id, port);
+                    }
+                    else
+                    {
+                        Task.Run(async () =>
+                        {
+                            SendMessageGroup(pack.group_id, $"正在获取[{ip}:{port}]");
+                            string local = await PingUtils.Get(ip, port);
+                            if (local == null)
+                            {
+                                SendMessageGroup(pack.group_id, $"获取[{ip}:{port}]错误");
+                            }
+                            else
+                            {
+                                SendMessageGroupImg(pack.group_id, local);
+                            }
+                        });
                     }
                 }
-                break;
+                else
+                {
+                    Get(pack.group_id, ip);
+                }
+                DelaySave.TryAdd(pack.user_id, Config.Delay);
+            }
         }
     }
 
-    private static void Log(LogType type, string data)
-        => logs.LogOut($"机器人状态:{type} {data}");
-
-    private static void State(StateType type)
-        => logs.LogOut($"机器人状态:{type}");
+    private static void Get(long group, string ip)
+    {
+        Task.Run(async () =>
+        {
+            SendMessageGroup(group, $"正在获取[{ip}]");
+            string local = await PingUtils.Get(ip);
+            if (local == null)
+            {
+                SendMessageGroup(group, $"获取[{ip}]错误");
+            }
+            else
+            {
+                SendMessageGroupImg(group, local);
+            }
+        });
+    }
 
     public record Pairing
     {
@@ -148,13 +149,9 @@ static class Program
         {
             Robot = new RobotObj()
             {
-                IP = "127.0.0.1",
-                Port = 23335,
-                Check = false,
-                Time = 10000
+                Url = "ws://127.0.0.1:8081/"
             },
-            Group = new(),
-            RunQQ = 0,
+            Group = [],
             Show = new ShowObj()
             {
                 FontNormal = "Microsoft YaHei",
@@ -180,25 +177,9 @@ static class Program
             return;
         }
 
-        RobotConfig config = new()
-        {
-            IP = Config.Robot.IP,
-            Port = Config.Robot.Port,
-            Check = Config.Robot.Check,
-            Name = "McPing",
-            Pack = new() { 49 },
-            RunQQ = Config.RunQQ,
-            Time = Config.Robot.Time,
-            CallAction = Message,
-            LogAction = Log,
-            StateAction = State
-        };
-
         LogOut("正在连接ColorMirai");
 
-        robot.Set(config);
-        robot.SetPipe(new ColorMiraiNetty(robot));
-        robot.Start();
+        RobotCore.Start();
 
         while (true)
         {
@@ -210,7 +191,7 @@ static class Program
             {
                 timer.Dispose();
                 LogOut("正在退出");
-                robot.Stop();
+                RobotCore.Stop();
                 return;
             }
             else if (arg[0] == "font")
@@ -282,11 +263,11 @@ static class Program
         => logs.LogOut(a);
     public static void SendMessageGroup(long group, string message)
     {
-        robot.SendGroupMessage(0, group, new() { message });
+        RobotCore.SendGroupMessage(group, [message]);
     }
 
     public static void SendMessageGroupImg(long group, string local)
     {
-        robot.SendGroupImageFile(0, group, local);
+        RobotCore.SendGroupMessage(group, [$"[CQ:image,file=file:///{local}]"]);
     }
 }
