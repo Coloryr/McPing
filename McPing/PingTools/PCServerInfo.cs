@@ -15,11 +15,6 @@ public class PCServerInfo : IServerInfo
     public ServerMotdObj ServerMotd { get; private set; }
 
     /// <summary>
-    /// 获取此次连接服务器的延迟(ms)
-    /// </summary>
-    public long Ping { get; private set; } = 999;
-
-    /// <summary>
     /// Icon DATA
     /// </summary>
     public byte[] IconData { get; set; }
@@ -56,7 +51,7 @@ public class PCServerInfo : IServerInfo
             pingWatcher.Start();
             int packetLength = handler.ReadNextVarIntRAW();
             pingWatcher.Stop();
-            Ping = pingWatcher.ElapsedMilliseconds;
+            ServerMotd.Ping = pingWatcher.ElapsedMilliseconds;
             if (packetLength > 0)
             {
                 List<byte> packetData = new(handler.ReadDataRAW(packetLength));
@@ -72,14 +67,12 @@ public class PCServerInfo : IServerInfo
                     }
                 }
             }
+
+            return true;
         }
         catch (Exception e)
         {
             Program.LogError(e);
-        }
-        finally
-        {
-            tcp.Close();
         }
         return false;
     }

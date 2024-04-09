@@ -260,7 +260,7 @@ public class ServerMotdObj(string ip, int port)
     /// The ping delay time.(ms)
     /// </summary>
     [JsonIgnore]
-    public long Ping { get; set; }
+    public long Ping { get; set; } = 999;
 
     /// <summary>
     /// The handshake state
