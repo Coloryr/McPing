@@ -1,11 +1,9 @@
 # McPing 
 一个MC服务器ping插件
 
-**需要配合最新版的ColorMirai**
+**需要配合最新版的OneBot协议的机器人**
 
-使用[ColorMirai](https://github.com/Coloryr/ColorMirai)
-
-注：启动前请安装net6
+注：启动前请安装net8
 
 ## 启动
 下载压缩包，解压到一个地方  
@@ -16,11 +14,10 @@ Linux
 ```
 dotnet McPing.dll
 ```
-修改`config.json`中的`RunQQ`(运行的QQ号)、`Group`(运行的群)  
+修改`config.json`中的`Group`运行的群与`Url`机器人地址  
 重启程序
 
 **Linux不会用就不要用Linux**
 
 ## 修订
-1.0.1: 可能吞字的问题
-1.1.0：更换库
+2.0.0：初始版本

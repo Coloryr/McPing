@@ -28,16 +28,15 @@ class PingUtils
     }
     private static async Task<string> Get(string IP, ushort Port)
     {
-        TcpClient tcp = null;
+        var tcp = new TcpClient()
+        {
+            ReceiveTimeout = 5000,
+            SendTimeout = 5000
+        };
         try
         {
             try
             {
-                tcp = new TcpClient()
-                {
-                    ReceiveTimeout = 5000,
-                    SendTimeout = 5000
-                };
                 await tcp.ConnectAsync(IP, Port);
             }
             catch (SocketException)
@@ -78,8 +77,8 @@ class PingUtils
         }
         finally
         {
-            tcp?.Close();
-            tcp?.Dispose();
+            tcp.Close();
+            tcp.Dispose();
         }
 
         try
@@ -88,10 +87,10 @@ class PingUtils
             {
                 Port = 19132;
             }
-            var info = new PEServerInfo(IP, Port);
-            if (info.MotdPe())
+            var info1 = new PEServerInfo(IP, Port);
+            if (info1.MotdPe())
             {
-                return GenShow.Gen(info);
+                return GenShow.Gen(info1);
             }
         }
         catch

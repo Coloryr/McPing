@@ -2,5 +2,5 @@
 
 interface IServerInfo
 {
-    ServerMotdObj MOTD { get; }
+    ServerMotdObj ServerMotd { get; }
 }

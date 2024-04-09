@@ -12,7 +12,7 @@ public class PCServerInfo : IServerInfo
     /// <summary>
     /// 获取服务器MOTD
     /// </summary>
-    public ServerMotdObj MOTD { get; private set; }
+    public ServerMotdObj ServerMotd { get; private set; }
 
     /// <summary>
     /// 获取此次连接服务器的延迟(ms)
@@ -32,7 +32,7 @@ public class PCServerInfo : IServerInfo
     {
         try
         {
-            MOTD = new ServerMotdObj(ip, port);
+            ServerMotd = new ServerMotdObj(ip, port);
             tcp.ReceiveBufferSize = 1024 * 1024;
 
             byte[] packet_id = ProtocolHandler.GetVarInt(0);
@@ -52,57 +52,25 @@ public class PCServerInfo : IServerInfo
 
             tcp.Client.Send(request_packet, SocketFlags.None);
             ProtocolHandler handler = new(tcp);
+            Stopwatch pingWatcher = new();
+            pingWatcher.Start();
             int packetLength = handler.ReadNextVarIntRAW();
+            pingWatcher.Stop();
+            Ping = pingWatcher.ElapsedMilliseconds;
             if (packetLength > 0)
             {
                 List<byte> packetData = new(handler.ReadDataRAW(packetLength));
                 if (ProtocolHandler.ReadNextVarInt(packetData) == 0x00) //Read Packet ID
                 {
                     string result = ProtocolHandler.ReadNextString(packetData); //Get the Json data
-                    JsonConvert.PopulateObject(result, MOTD);
+                    JsonConvert.PopulateObject(result, ServerMotd);
 
-                    if (!string.IsNullOrEmpty(MOTD.Description.Text)
-                        && MOTD.Description.Extra == null && MOTD.Description.Text.Contains('§'))
+                    if (!string.IsNullOrEmpty(ServerMotd.Description.Text)
+                        && ServerMotd.Description.Extra == null && ServerMotd.Description.Text.Contains('§'))
                     {
-                        MOTD.Description = ServerDescriptionJsonConverter.StringToChar(MOTD.Description.Text);
+                        ServerMotd.Description = ServerDescriptionJsonConverter.StringToChar(ServerMotd.Description.Text);
                     }
                 }
-            }
-
-            byte[] ping_id = ProtocolHandler.GetVarInt(1);
-            byte[] ping_content = BitConverter.GetBytes((long)233);
-            byte[] ping_packet = ProtocolHandler.ConcatBytes(ping_id, ping_content);
-            byte[] ping_tosend = ProtocolHandler.ConcatBytes(ProtocolHandler.GetVarInt(ping_packet.Length), ping_packet);
-
-            try
-            {
-                tcp.ReceiveTimeout = 1000;
-
-                Stopwatch pingWatcher = new();
-
-                pingWatcher.Start();
-                tcp.Client.Send(ping_tosend, SocketFlags.None);
-
-                int pingLenghth = handler.ReadNextVarIntRAW();
-                pingWatcher.Stop();
-                if (pingLenghth > 0)
-                {
-                    List<byte> packetData = new(handler.ReadDataRAW(pingLenghth));
-                    if (ProtocolHandler.ReadNextVarInt(packetData) == 0x01) //Read Packet ID
-                    {
-                        long content = ProtocolHandler.ReadNextByte(packetData); //Get the Json data
-                        if (content == 233)
-                        {
-                            Ping = pingWatcher.ElapsedMilliseconds;
-                        }
-                    }
-                }
-                return true;
-            }
-            catch (Exception e)
-            {
-                Ping = 999;
-                return true;
             }
         }
         catch (Exception e)

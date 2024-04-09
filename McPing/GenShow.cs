@@ -185,14 +185,14 @@ static class GenShow
                 operation.Clear(BackgroundColor);
             });
             Image bitmap1;
-            if (info.MOTD.FaviconByteArray == null)
+            if (info.ServerMotd.FaviconByteArray == null)
             {
                 bitmap1 = new Image<Rgba32>(64, 64);
             }
             else
             {
                 using MemoryStream stream = new();
-                stream.Write(info.MOTD.FaviconByteArray);
+                stream.Write(info.ServerMotd.FaviconByteArray);
                 stream.Seek(0, SeekOrigin.Begin);
                 bitmap1 = Image.Load(stream);
                 bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
@@ -206,10 +206,10 @@ static class GenShow
             float y = 10;
             float x = 80;
 
-            DrawChat(ref img, ref x, ref y, info.MOTD.Description);
+            DrawChat(ref img, ref x, ref y, info.ServerMotd.Description);
             y = 50;
             x = 80;
-            string data = $"在线人数:{info.MOTD.Players.Online}/{info.MOTD.Players.Max}";
+            string data = $"在线人数:{info.ServerMotd.Players.Online}/{info.ServerMotd.Players.Max}";
             var res = TextMeasurer.MeasureSize(data, FontItalicOpt);
             img.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
             {
@@ -224,7 +224,7 @@ static class GenShow
             }, data, VersionColor));
             x += res.Width + 10f;
 
-            var chat = ServerDescriptionJsonConverter.StringToChar(info.MOTD.Version.Name);
+            var chat = ServerDescriptionJsonConverter.StringToChar(info.ServerMotd.Version.Name);
 
             DrawChat(ref img, ref x, ref y, chat);
             img.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
@@ -233,9 +233,9 @@ static class GenShow
             }, "Ping", GoodPingColor).DrawText(new RichTextOptions(FontNormalOpt)
             {
                 Origin = new PointF(600, 30)
-            }, $"{info.MOTD.Ping}", info.MOTD.Ping > 100 ? BadPingColor : GoodPingColor));
+            }, $"{info.ServerMotd.Ping}", info.ServerMotd.Ping > 100 ? BadPingColor : GoodPingColor));
 
-            string local = $"{PicDir}{info.MOTD.ServerAddress}_{info.MOTD.ServerPort}.png";
+            string local = $"{PicDir}{info.ServerMotd.ServerAddress}_{info.ServerMotd.ServerPort}.png";
             img.SaveAsPng(local);
             Program.LogOut("生成图片" + local);
             return local;

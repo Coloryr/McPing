@@ -12,7 +12,7 @@ namespace McPing;
 
 static class Program
 {
-    public const string Version = "1.9.0";
+    public const string Version = "2.0.0";
     public static string RunLocal { get; private set; }
     public static ConfigObj Config { get; private set; }
 
@@ -20,11 +20,11 @@ static class Program
     private static bool have;
 
     private static readonly ConcurrentDictionary<long, int> DelaySave = new();
-    private static Timer timer = new(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    private static readonly Timer timer = new(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
     private static void Tick(object sender)
     {
-        List<long> remove = new();
+        List<long> remove = [];
         foreach (var item in DelaySave)
         {
             DelaySave.TryUpdate(item.Key, item.Value - 1, item.Value);
@@ -48,7 +48,7 @@ static class Program
             {
                 return;
             }
-            var message = pack.message[0].data.text.Split(' ');
+            var message = pack.raw_message.Split(' ');
             if (message[0] == Config.Head)
             {
                 if (have)
@@ -177,7 +177,7 @@ static class Program
             return;
         }
 
-        LogOut("正在连接ColorMirai");
+        LogOut("正在连接机器人");
 
         RobotCore.Start();
 

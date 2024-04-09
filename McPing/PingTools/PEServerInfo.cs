@@ -16,7 +16,7 @@ public class PEServerInfo(string ip, int port) : IServerInfo
     public int MaxPlayerCount { get; private set; }
     public long Ping { get; private set; }
 
-    public ServerMotdObj MOTD { get; private set; } = new(ip, port);
+    public ServerMotdObj ServerMotd { get; private set; } = new(ip, port);
 
     private static readonly byte[] msg = [0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78,];
 
@@ -39,25 +39,25 @@ public class PEServerInfo(string ip, int port) : IServerInfo
             pingWatcher.Start();
             socket.ReceiveTimeout = 5000;
             socket.SendTimeout = 5000;
-            socket.Connect(MOTD.ServerAddress, MOTD.ServerPort);
+            socket.Connect(ServerMotd.ServerAddress, ServerMotd.ServerPort);
             socket.Send(list.ToArray());
             int length = socket.Receive(buffer);
             pingWatcher.Stop();
 
             var res = Encoding.UTF8.GetString(buffer, 0, length).Split(";");
 
-            MOTD.Players = new();
+            ServerMotd.Players = new();
             _ = int.TryParse(res[4], out int a);
-            MOTD.Players.Online = a;
+            ServerMotd.Players.Online = a;
             _ = int.TryParse(res[5], out a);
-            MOTD.Players.Max = a;
+            ServerMotd.Players.Max = a;
 
-            MOTD.Version = new()
+            ServerMotd.Version = new()
             {
                 Name = $"{res[3]} {res[8]}"
             };
 
-            MOTD.Description = ServerDescriptionJsonConverter.StringToChar(res[1]);
+            ServerMotd.Description = ServerDescriptionJsonConverter.StringToChar(res[1]);
             //("motd", res[1]);
             //("protocolVersion", res[2]);
             //("version", res[3]);

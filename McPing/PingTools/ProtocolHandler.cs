@@ -11,8 +11,14 @@ public class ProtocolHandler(TcpClient tcp)
     public void Receive(byte[] buffer, int start, int offset, SocketFlags f)
     {
         int read = 0;
+        int count = 0;
         while (read < offset)
         {
+            count++;
+            if (count > 20)
+            {
+                throw new Exception("read fail");
+            }
             read += tcp.Client.Receive(buffer, start + read, offset - read, f);
         }
     }
