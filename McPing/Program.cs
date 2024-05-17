@@ -1,5 +1,7 @@
 ﻿using McPing.PingTools;
 using McPing.Robot;
+using OneBotSharp.Objs.Event;
+using OneBotSharp.Objs.Message;
 using SixLabors.Fonts;
 using System;
 using System.Collections.Concurrent;
@@ -40,42 +42,42 @@ static class Program
         }
     }
 
-    public static void Message(GroupMessagePack pack)
+    public static void Message(EventGroupMessage pack)
     {
-        if (Config.Group.Contains(pack.group_id))
+        if (Config.Group.Contains(pack.GroupId))
         {
-            if (pack.message[0].type != "text")
+            if (pack.Messages[0] is not MsgText text)
             {
                 return;
             }
-            var message = pack.raw_message.Split(' ');
+            var message = text.Data.Text!.Split(' ');
             if (message[0] == Config.Head)
             {
                 if (have)
                 {
                     Task.Run(async () =>
                     {
-                        SendMessageGroup(pack.group_id, $"正在获取[{Config.DefaultIP}]");
+                        SendMessageGroup(pack.GroupId, $"正在获取[{Config.DefaultIP}]");
                         string local = await PingUtils.Get(Config.DefaultIP);
                         if (local == null)
                         {
-                            SendMessageGroup(pack.group_id, $"获取[{Config.DefaultIP}]错误");
+                            SendMessageGroup(pack.GroupId, $"获取[{Config.DefaultIP}]错误");
                         }
                         else
                         {
-                            SendMessageGroupImg(pack.group_id, local);
+                            SendMessageGroupImg(pack.GroupId, local);
                         }
                     });
                     return;
                 }
                 if (message.Length == 1)
                 {
-                    SendMessageGroup(pack.group_id, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
+                    SendMessageGroup(pack.GroupId, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
                     return;
                 }
-                if (DelaySave.ContainsKey(pack.user_id))
+                if (DelaySave.ContainsKey(pack.UserId))
                 {
-                    SendMessageGroup(pack.group_id, $"查询过于频繁");
+                    SendMessageGroup(pack.GroupId, $"查询过于频繁");
                     return;
                 }
                 var ip = message[1];
@@ -84,30 +86,30 @@ static class Program
                     var port = message[2];
                     if (string.IsNullOrWhiteSpace(ip))
                     {
-                        Get(pack.group_id, port);
+                        Get(pack.GroupId, port);
                     }
                     else
                     {
                         Task.Run(async () =>
                         {
-                            SendMessageGroup(pack.group_id, $"正在获取[{ip}:{port}]");
+                            SendMessageGroup(pack.GroupId, $"正在获取[{ip}:{port}]");
                             string local = await PingUtils.Get(ip, port);
                             if (local == null)
                             {
-                                SendMessageGroup(pack.group_id, $"获取[{ip}:{port}]错误");
+                                SendMessageGroup(pack.GroupId, $"获取[{ip}:{port}]错误");
                             }
                             else
                             {
-                                SendMessageGroupImg(pack.group_id, local);
+                                SendMessageGroupImg(pack.GroupId, local);
                             }
                         });
                     }
                 }
                 else
                 {
-                    Get(pack.group_id, ip);
+                    Get(pack.GroupId, ip);
                 }
-                DelaySave.TryAdd(pack.user_id, Config.Delay);
+                DelaySave.TryAdd(pack.UserId, Config.Delay);
             }
         }
     }
@@ -263,11 +265,11 @@ static class Program
         => logs.LogOut(a);
     public static void SendMessageGroup(long group, string message)
     {
-        RobotCore.SendGroupMessage(group, [message]);
+        RobotCore.SendGroupMessage(group, [MsgText.Build(message)]);
     }
 
     public static void SendMessageGroupImg(long group, string local)
     {
-        RobotCore.SendGroupMessage(group, [$"[CQ:image,file=file://{local}]"]);
+        RobotCore.SendGroupMessage(group, [MsgImage.BuildSendFile(local)]);
     }
 }

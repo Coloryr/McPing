@@ -207,7 +207,7 @@ static class GenShow
             float x = 80;
 
             DrawChat(ref img, ref x, ref y, info.ServerMotd.Description);
-            y = 50;
+            y = 55;
             x = 80;
             string data = $"在线人数:{info.ServerMotd.Players.Online}/{info.ServerMotd.Players.Max}";
             var res = TextMeasurer.MeasureSize(data, FontItalicOpt);

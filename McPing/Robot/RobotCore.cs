@@ -1,72 +1,123 @@
 ﻿using Newtonsoft.Json.Linq;
+using OneBotSharp;
+using OneBotSharp.Objs.Api;
+using OneBotSharp.Objs.Event;
+using OneBotSharp.Objs.Message;
+using OneBotSharp.Protocol;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace McPing.Robot;
 
 public static class RobotCore
 {
-    public static OneBotSDK Robot;
-
-    public static void Message(object data)
-    {
-        if (data is GroupMessagePack pack)
-        {
-            Program.Message(pack);
-        }
-    }
+    public static IOneBot<ISendRecvPipe> Robot;
+    private static Thread thread;
+    private static bool run;
+    private static bool send;
+    private static bool restart;
+    private static ConcurrentQueue<Action> list = [];
 
     public static void Start()
     {
-        Robot = new OneBotSDK(Program.Config.Robot.Url,
+        Robot = Bot.MakePipe(Program.Config.Robot.Url,
             Program.Config.Robot.Authorization);
-        Robot.Start();
+        Robot.Pipe.EventRecv += Robot_EventRecv;
+        Robot.Pipe.StateChange += Pipe_StateChange;
+        thread = new Thread(Run);
+        run = true;
+        thread.Start();
+        Connect();
     }
 
-    public static void SendPrivateMessage(long to, List<string> list)
+    private static void Run()
     {
-        var msg = new StringBuilder();
-        foreach (var item in list)
+        while (run)
         {
-            msg.Append(item);
-        }
-        var obj = new JObject()
-        {
-            { "action", "send_private_msg" },
-            { "params", new JObject()
+            if (send)
             {
-                { "user_id", to },
-                { "message", msg.ToString() }
+                while (list.TryDequeue(out var runa))
+                {
+                    runa();
+                }
+                Thread.Sleep(20);
             }
+            else if (restart)
+            {
+                restart = false;
+                Connect();
+                Thread.Sleep(5000);
             }
-        };
-
-        Robot.Send(obj.ToString());
+        }
     }
 
-    public static void SendGroupMessage(long group, List<string> list)
+    private static async void Pipe_StateChange(ISendRecvPipe arg1, ISendRecvPipe.PipeState arg2)
     {
-        var msg = new StringBuilder();
-        foreach (var item in list)
+        if (arg2 is ISendRecvPipe.PipeState.ConnectFail
+            or ISendRecvPipe.PipeState.Disconnected)
         {
-            msg.Append(item);
-        }
-        var obj = new JObject()
-        {
-            { "action", "send_group_msg" },
-            { "params", new JObject()
+            send = false;
+            if (run == false)
             {
-                { "group_id", group },
-                { "message", msg.ToString() }
+                return;
             }
-            }
-        };
+            await Robot.Close();
+            restart = true;
+        }
+        else if (arg2 == ISendRecvPipe.PipeState.Connected)
+        {
+            send = true;
+        }
+    }
 
-        Robot.Send(obj.ToString());
+    private static void Connect()
+    {
+        try
+        {
+            Robot.Start();
+        }
+        catch (Exception e)
+        {
+            if (run == false)
+            {
+                return;
+            }
+            Program.LogError(e);
+            restart = true;
+        }
+    }
+
+    private static void Robot_EventRecv(ISendRecvPipe pipe, EventBase obj)
+    {
+        if (obj is EventGroupMessage message)
+        {
+            Program.Message(message);
+        }
     }
 
     public static void Stop()
     {
-        Robot.Stop();
+        run = false;
+        Robot.Close();
+        Robot.Dispose();
+    }
+
+    internal static void SendPrivateMessage(long sendQQ, List<MsgBase> value)
+    {
+        list.Enqueue(() =>
+        {
+            Robot.Pipe.SendPrivateMsg(SendPrivateMsg.Build(sendQQ, value));
+        });
+    }
+
+    internal static void SendGroupMessage(long sendQQ, List<MsgBase> value)
+    {
+        list.Enqueue(() =>
+        {
+            Robot.Pipe.SendGroupMsg(SendGroupMsg.Build(sendQQ, value));
+        });
     }
 }

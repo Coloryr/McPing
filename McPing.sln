@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "McPing", "McPing\McPing.csproj", "{2F101BD4-B538-4A1C-BF16-CD4B3A3901A4}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OneBotSharp", "OneBotSharp\OneBotSharp\OneBotSharp.csproj", "{D6AA5BD1-2312-4EBB-8211-8E4C1088B016}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{2F101BD4-B538-4A1C-BF16-CD4B3A3901A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F101BD4-B538-4A1C-BF16-CD4B3A3901A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F101BD4-B538-4A1C-BF16-CD4B3A3901A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6AA5BD1-2312-4EBB-8211-8E4C1088B016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6AA5BD1-2312-4EBB-8211-8E4C1088B016}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6AA5BD1-2312-4EBB-8211-8E4C1088B016}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6AA5BD1-2312-4EBB-8211-8E4C1088B016}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

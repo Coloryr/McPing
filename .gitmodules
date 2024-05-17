@@ -1,0 +1,3 @@
+[submodule "OneBotSharp"]
+	path = OneBotSharp
+	url = https://github.com/Coloryr/OneBotSharp.git
