@@ -46,7 +46,7 @@ static class Program
     {
         if (Config.Group.Contains(pack.GroupId))
         {
-            if (pack.Messages[0] is not MsgText text)
+            if (pack.Messages.Count <= 0 || pack.Messages[0] is not MsgText text)
             {
                 return;
             }
