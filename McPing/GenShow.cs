@@ -13,68 +13,67 @@ namespace McPing;
 
 static class GenShow
 {
-    private const string PicName = "PicTemp";
-    private static string PicDir;
+    private const string _picName = "PicTemp";
+    private static string _picDir;
 
-    private static Font FontNormal;
-    private static Font FontBold;
-    private static Font FontItalic;
+    private static Font _fontNormal;
+    private static Font _fontBold;
+    private static Font _fontItalic;
 
-    private static RichTextOptions FontNormalOpt;
-    private static RichTextOptions FontBoldOpt;
-    private static RichTextOptions FontItalicOpt;
+    private static RichTextOptions _fontNormalOpt;
+    private static RichTextOptions _fontBoldOpt;
+    private static RichTextOptions _fontItalicOpt;
 
-    private static Color BackgroundColor;
-    private static Color GoodPingColor;
-    private static Color BadPingColor;
-    private static Color PlayerColor;
-    private static Color VersionColor;
+    private static Color _backgroundColor;
+    private static Color _goodPingColor;
+    private static Color _badPingColor;
+    private static Color _playerColor;
+    private static Color _versionColor;
 
-    private const int Size = 17;
+    private static readonly Random _random = new();
 
-    private static FontFamily FontEmoji;
+    private const int _size = 17;
+
+    private static FontFamily _fontEmoji;
 
     public static bool Init()
     {
-
-        PicDir = $"{Program.RunLocal}{PicName}/";
-        if (!Directory.Exists(PicDir))
+        _picDir = $"{Program.RunLocal}{_picName}/";
+        if (!Directory.Exists(_picDir))
         {
-            Directory.CreateDirectory(PicDir);
+            Directory.CreateDirectory(_picDir);
         }
 
         var temp = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontNormal).FirstOrDefault();
-
         var temp1 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontBold).FirstOrDefault();
-
         var temp2 = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontItalic).FirstOrDefault();
 
-        FontEmoji = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontEmoji).FirstOrDefault();
+        _fontEmoji = SystemFonts.Families.Where(a => a.Name == Program.Config.Show.FontEmoji).FirstOrDefault();
 
-        FontNormal = temp.CreateFont(Size);
-        FontBold = temp1.CreateFont(Size, FontStyle.Bold);
-        FontItalic = temp2.CreateFont(Size, FontStyle.Italic);
+        _fontNormal = temp.CreateFont(_size);
+        _fontBold = temp1.CreateFont(_size, FontStyle.Bold);
+        _fontItalic = temp2.CreateFont(_size, FontStyle.Italic);
 
-        FontNormalOpt = new RichTextOptions(FontNormal)
+        _fontNormalOpt = new RichTextOptions(_fontNormal)
         {
-            FallbackFontFamilies = [FontEmoji]
+            FallbackFontFamilies = [_fontEmoji]
         };
 
-        FontBoldOpt = new RichTextOptions(FontBold)
+        _fontBoldOpt = new RichTextOptions(_fontBold)
         {
-            FallbackFontFamilies = [FontEmoji]
+            FallbackFontFamilies = [_fontEmoji]
         };
 
-        FontItalicOpt = new RichTextOptions(FontItalic)
+        _fontItalicOpt = new RichTextOptions(_fontItalic)
         {
-            FallbackFontFamilies = [FontEmoji]
+            FallbackFontFamilies = [_fontEmoji]
         };
 
-        BackgroundColor = Color.Parse(Program.Config.Show.BGColor);
-        GoodPingColor = Color.Parse(Program.Config.Show.GoodPingColor);
-        BadPingColor = Color.Parse(Program.Config.Show.BadPingColor);
-        PlayerColor = Color.Parse(Program.Config.Show.PlayerColor);
-        VersionColor = Color.Parse(Program.Config.Show.VersionColor);
+        _backgroundColor = Color.Parse(Program.Config.Show.BGColor);
+        _goodPingColor = Color.Parse(Program.Config.Show.GoodPingColor);
+        _badPingColor = Color.Parse(Program.Config.Show.BadPingColor);
+        _playerColor = Color.Parse(Program.Config.Show.PlayerColor);
+        _versionColor = Color.Parse(Program.Config.Show.VersionColor);
 
         return true;
     }
@@ -83,8 +82,6 @@ static class GenShow
     {
         normal, bold, italic
     }
-
-    private static readonly Random _random = new();
 
     public static void Draw(ref Image image, ref float x, ref float y, bool underline, bool strikethrough,
         FontState now, Color brush, string data)
@@ -95,22 +92,22 @@ static class GenShow
         {
             default:
             case FontState.normal:
-                res = TextMeasurer.MeasureSize(data, FontNormalOpt);
-                image.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
+                res = TextMeasurer.MeasureSize(data, _fontNormalOpt);
+                image.Mutate(a => a.DrawText(new RichTextOptions(_fontNormalOpt)
                 {
                     Origin = new PointF(x1, y1)
                 }, data, brush));
                 break;
             case FontState.bold:
-                res = TextMeasurer.MeasureSize(data, FontBoldOpt);
-                image.Mutate(a => a.DrawText(new RichTextOptions(FontBoldOpt)
+                res = TextMeasurer.MeasureSize(data, _fontBoldOpt);
+                image.Mutate(a => a.DrawText(new RichTextOptions(_fontBoldOpt)
                 {
                     Origin = new PointF(x1, y1)
                 }, data, brush));
                 break;
             case FontState.italic:
-                res = TextMeasurer.MeasureSize(data, FontItalicOpt);
-                image.Mutate(a => a.DrawText(new RichTextOptions(FontItalicOpt)
+                res = TextMeasurer.MeasureSize(data, _fontItalicOpt);
+                image.Mutate(a => a.DrawText(new RichTextOptions(_fontItalicOpt)
                 {
                     Origin = new PointF(x1, y1)
                 }, data, brush));
@@ -182,7 +179,7 @@ static class GenShow
             Image img = new Image<Rgba32>(660, 84);
             img.Mutate((operation) =>
             {
-                operation.Clear(BackgroundColor);
+                operation.Clear(_backgroundColor);
             });
             Image bitmap1;
             if (info.ServerMotd.FaviconByteArray == null)
@@ -191,11 +188,16 @@ static class GenShow
             }
             else
             {
-                using MemoryStream stream = new();
-                stream.Write(info.ServerMotd.FaviconByteArray);
-                stream.Seek(0, SeekOrigin.Begin);
-                bitmap1 = Image.Load(stream);
-                bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
+                try
+                {
+                    using var stream = new MemoryStream(info.ServerMotd.FaviconByteArray);
+                    bitmap1 = Image.Load(stream);
+                    bitmap1 = Tools.ZoomImage(bitmap1, 64, 64);
+                }
+                catch
+                {
+                    bitmap1 = new Image<Rgba32>(64, 64);
+                }
             }
             img.Mutate((operation) =>
             {
@@ -210,32 +212,32 @@ static class GenShow
             y = 55;
             x = 80;
             string data = $"在线人数:{info.ServerMotd.Players.Online}/{info.ServerMotd.Players.Max}";
-            var res = TextMeasurer.MeasureSize(data, FontItalicOpt);
-            img.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
+            var res = TextMeasurer.MeasureSize(data, _fontItalicOpt);
+            img.Mutate(a => a.DrawText(new RichTextOptions(_fontNormalOpt)
             {
                 Origin = new PointF(x, y)
-            }, data, PlayerColor));
+            }, data, _playerColor));
             x += res.Width + 10f;
             data = $"服务器版本:";
-            res = TextMeasurer.MeasureSize(data, FontItalicOpt);
-            img.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
+            res = TextMeasurer.MeasureSize(data, _fontItalicOpt);
+            img.Mutate(a => a.DrawText(new RichTextOptions(_fontNormalOpt)
             {
                 Origin = new PointF(x, y)
-            }, data, VersionColor));
+            }, data, _versionColor));
             x += res.Width + 10f;
 
             var chat = ServerDescriptionJsonConverter.StringToChar(info.ServerMotd.Version.Name);
 
             DrawChat(ref img, ref x, ref y, chat);
-            img.Mutate(a => a.DrawText(new RichTextOptions(FontNormalOpt)
+            img.Mutate(a => a.DrawText(new RichTextOptions(_fontNormalOpt)
             {
                 Origin = new PointF(600, 10)
-            }, "Ping", GoodPingColor).DrawText(new RichTextOptions(FontNormalOpt)
+            }, "Ping", _goodPingColor).DrawText(new RichTextOptions(_fontNormalOpt)
             {
                 Origin = new PointF(600, 30)
-            }, $"{info.ServerMotd.Ping}", info.ServerMotd.Ping > 100 ? BadPingColor : GoodPingColor));
+            }, $"{info.ServerMotd.Ping}", info.ServerMotd.Ping > 100 ? _badPingColor : _goodPingColor));
 
-            string local = $"{PicDir}{info.ServerMotd.ServerAddress}_{info.ServerMotd.ServerPort}.png";
+            string local = $"{_picDir}{info.ServerMotd.ServerAddress}_{info.ServerMotd.ServerPort}.png";
             img.SaveAsPng(local);
             Program.LogOut("生成图片" + local);
             return local;

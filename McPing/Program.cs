@@ -18,18 +18,18 @@ static class Program
     public static string RunLocal { get; private set; }
     public static ConfigObj Config { get; private set; }
 
-    private static Logs logs;
-    private static bool have;
+    private static Logs _logs;
+    private static bool _have;
 
-    private static readonly ConcurrentDictionary<long, int> DelaySave = new();
-    private static readonly Timer timer = new(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    private static readonly ConcurrentDictionary<long, int> _delaySave = new();
+    private static readonly Timer _timer = new(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
     private static void Tick(object sender)
     {
         List<long> remove = [];
-        foreach (var item in DelaySave)
+        foreach (var item in _delaySave)
         {
-            DelaySave.TryUpdate(item.Key, item.Value - 1, item.Value);
+            _delaySave.TryUpdate(item.Key, item.Value - 1, item.Value);
             if (item.Value <= 1)
             {
                 remove.Add(item.Key);
@@ -38,7 +38,7 @@ static class Program
 
         foreach (var item in remove)
         {
-            DelaySave.Remove(item, out var temp);
+            _delaySave.Remove(item, out var temp);
         }
     }
 
@@ -53,7 +53,7 @@ static class Program
             var message = text.Data.Text!.Split(' ');
             if (message[0] == Config.Head)
             {
-                if (have)
+                if (_have)
                 {
                     Task.Run(async () =>
                     {
@@ -75,7 +75,7 @@ static class Program
                     SendMessageGroup(pack.GroupId, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
                     return;
                 }
-                if (DelaySave.ContainsKey(pack.UserId))
+                if (_delaySave.ContainsKey(pack.UserId))
                 {
                     SendMessageGroup(pack.GroupId, $"查询过于频繁");
                     return;
@@ -109,7 +109,7 @@ static class Program
                 {
                     Get(pack.GroupId, ip);
                 }
-                DelaySave.TryAdd(pack.UserId, Config.Delay);
+                _delaySave.TryAdd(pack.UserId, Config.Delay);
             }
         }
     }
@@ -146,7 +146,7 @@ static class Program
     {
         Console.WriteLine($"[Main]正在启动McPing {Version}");
         RunLocal = AppContext.BaseDirectory;
-        logs = new Logs(RunLocal);
+        _logs = new Logs(RunLocal);
         Config = ConfigUtils.Config(new ConfigObj()
         {
             Robot = new RobotObj()
@@ -171,7 +171,7 @@ static class Program
             Delay = 10
         }, RunLocal + "config.json");
 
-        have = !string.IsNullOrWhiteSpace(Config.DefaultIP);
+        _have = !string.IsNullOrWhiteSpace(Config.DefaultIP);
 
         if (!GenShow.Init())
         {
@@ -191,7 +191,7 @@ static class Program
             var arg = comm.Split(' ');
             if (arg[0] == "stop")
             {
-                timer.Dispose();
+                _timer.Dispose();
                 LogOut("正在退出");
                 RobotCore.Stop();
                 return;
@@ -258,11 +258,11 @@ static class Program
     }
 
     public static void LogError(Exception e)
-        => logs.LogError(e);
+        => _logs.LogError(e);
     public static void LogError(string a)
-        => logs.LogError(a);
+        => _logs.LogError(a);
     public static void LogOut(string a)
-        => logs.LogOut(a);
+        => _logs.LogOut(a);
     public static void SendMessageGroup(long group, string message)
     {
         RobotCore.SendGroupMessage(group, [MsgText.Build(message)]);

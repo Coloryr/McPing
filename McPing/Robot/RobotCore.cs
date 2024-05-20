@@ -15,11 +15,11 @@ namespace McPing.Robot;
 public static class RobotCore
 {
     public static IOneBot<ISendRecvPipe> Robot;
-    private static Thread thread;
-    private static bool run;
-    private static bool send;
-    private static bool restart;
-    private static ConcurrentQueue<Action> list = [];
+    private static Thread _thread;
+    private static bool _run;
+    private static bool _send;
+    private static bool _restart;
+    private static ConcurrentQueue<Action> _list = [];
 
     public static void Start()
     {
@@ -27,27 +27,27 @@ public static class RobotCore
             Program.Config.Robot.Authorization);
         Robot.Pipe.EventRecv += Robot_EventRecv;
         Robot.Pipe.StateChange += Pipe_StateChange;
-        thread = new Thread(Run);
-        run = true;
-        thread.Start();
+        _thread = new Thread(Run);
+        _run = true;
+        _thread.Start();
         Connect();
     }
 
     private static void Run()
     {
-        while (run)
+        while (_run)
         {
-            if (send)
+            if (_send)
             {
-                while (list.TryDequeue(out var runa))
+                while (_list.TryDequeue(out var runa))
                 {
                     runa();
                 }
                 Thread.Sleep(20);
             }
-            else if (restart)
+            else if (_restart)
             {
-                restart = false;
+                _restart = false;
                 Connect();
                 Thread.Sleep(5000);
             }
@@ -59,17 +59,17 @@ public static class RobotCore
         if (arg2 is ISendRecvPipe.PipeState.ConnectFail
             or ISendRecvPipe.PipeState.Disconnected)
         {
-            send = false;
-            if (run == false)
+            _send = false;
+            if (_run == false)
             {
                 return;
             }
             await Robot.Close();
-            restart = true;
+            _restart = true;
         }
         else if (arg2 == ISendRecvPipe.PipeState.Connected)
         {
-            send = true;
+            _send = true;
         }
     }
 
@@ -81,12 +81,12 @@ public static class RobotCore
         }
         catch (Exception e)
         {
-            if (run == false)
+            if (_run == false)
             {
                 return;
             }
             Program.LogError(e);
-            restart = true;
+            _restart = true;
         }
     }
 
@@ -100,14 +100,14 @@ public static class RobotCore
 
     public static void Stop()
     {
-        run = false;
+        _run = false;
         Robot.Close();
         Robot.Dispose();
     }
 
     internal static void SendPrivateMessage(long sendQQ, List<MsgBase> value)
     {
-        list.Enqueue(() =>
+        _list.Enqueue(() =>
         {
             Robot.Pipe.SendPrivateMsg(SendPrivateMsg.Build(sendQQ, value));
         });
@@ -115,7 +115,7 @@ public static class RobotCore
 
     internal static void SendGroupMessage(long sendQQ, List<MsgBase> value)
     {
-        list.Enqueue(() =>
+        _list.Enqueue(() =>
         {
             Robot.Pipe.SendGroupMsg(SendGroupMsg.Build(sendQQ, value));
         });
