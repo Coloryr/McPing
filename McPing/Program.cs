@@ -46,11 +46,11 @@ static class Program
     {
         if (Config.Group.Contains(pack.GroupId))
         {
-            if (pack.Messages.Count <= 0 || pack.Messages[0] is not MsgText text)
+            if (pack.Messages.Count <= 0)
             {
                 return;
             }
-            var message = text.Data.Text!.Split(' ');
+            var message = pack.RawMessage.Split(' ');
             if (message[0] == Config.Head)
             {
                 if (_have)
