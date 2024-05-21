@@ -1,6 +1,7 @@
 ﻿using Heijden.Dns.Portable;
 using Heijden.DNS;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -35,9 +36,12 @@ class PingUtils
         };
         try
         {
+            Stopwatch pingWatcher = new();
             try
             {
+                pingWatcher.Start();
                 await tcp.ConnectAsync(IP, Port);
+                pingWatcher.Stop();
             }
             catch (SocketException)
             {
@@ -57,7 +61,9 @@ class PingUtils
                     };
                     try
                     {
+                        pingWatcher.Restart();
                         await tcp.ConnectAsync(IP = result.TARGET[..^1], Port = result.PORT);
+                        pingWatcher.Stop();
                     }
                     catch
                     {
@@ -72,6 +78,7 @@ class PingUtils
             PCServerInfo info = new();
             if (info.StartGetServerInfo(tcp, IP, Port))
             {
+                info.ServerMotd.Ping = pingWatcher.ElapsedMilliseconds;
                 return GenShow.Gen(info);
             }
         }

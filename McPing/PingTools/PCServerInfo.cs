@@ -44,14 +44,12 @@ public class PCServerInfo : IServerInfo
             byte[] request_packet = ProtocolHandler.ConcatBytes(ProtocolHandler.GetVarInt(status_request.Length), status_request);
 
             tcp.Client.Send(tosend, SocketFlags.None);
-
             tcp.Client.Send(request_packet, SocketFlags.None);
+           
             ProtocolHandler handler = new(tcp);
-            Stopwatch pingWatcher = new();
-            pingWatcher.Start();
+           
             int packetLength = handler.ReadNextVarIntRAW();
-            pingWatcher.Stop();
-            ServerMotd.Ping = pingWatcher.ElapsedMilliseconds;
+            
             if (packetLength > 0)
             {
                 List<byte> packetData = new(handler.ReadDataRAW(packetLength));
