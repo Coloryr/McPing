@@ -27,5 +27,5 @@ jobs:
     - name: 更新构建文件
       uses: actions/upload-artifact@v2
       with:
-        name: "McPing2"
+        name: "McPing"
         path: build_out
