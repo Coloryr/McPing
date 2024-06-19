@@ -42,17 +42,18 @@ public class PCServerInfo : IServerInfo
 
             byte[] status_request = ProtocolHandler.GetVarInt(0);
             byte[] request_packet = ProtocolHandler.ConcatBytes(ProtocolHandler.GetVarInt(status_request.Length), status_request);
-
+            ProtocolHandler handler = new(tcp);
             tcp.Client.Send(tosend, SocketFlags.None);
             tcp.Client.Send(request_packet, SocketFlags.None);
-           
-            ProtocolHandler handler = new(tcp);
-           
+            
             int packetLength = handler.ReadNextVarIntRAW();
             
+            ServerMotd.Ping = handler.PingWatcher.ElapsedMilliseconds;
+
             if (packetLength > 0)
             {
                 List<byte> packetData = new(handler.ReadDataRAW(packetLength));
+                
                 if (ProtocolHandler.ReadNextVarInt(packetData) == 0x00) //Read Packet ID
                 {
                     string result = ProtocolHandler.ReadNextString(packetData); //Get the Json data

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -8,6 +9,7 @@ namespace McPing.PingTools;
 
 public class ProtocolHandler(TcpClient tcp)
 {
+    public Stopwatch PingWatcher = new();
     public void Receive(byte[] buffer, int start, int offset, SocketFlags f)
     {
         int read = 0;
@@ -19,7 +21,15 @@ public class ProtocolHandler(TcpClient tcp)
             {
                 throw new Exception("read fail");
             }
+            if (PingWatcher.Elapsed == TimeSpan.Zero)
+            {
+                PingWatcher.Start();
+            }
             read += tcp.Client.Receive(buffer, start + read, offset - read, f);
+            if (PingWatcher.IsRunning)
+            {
+                PingWatcher.Stop();
+            }
         }
     }
 

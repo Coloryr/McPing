@@ -14,7 +14,7 @@ namespace McPing;
 
 static class Program
 {
-    public const string Version = "2.0.0";
+    public const string Version = "2.0.1";
     public static string RunLocal { get; private set; }
     public static ConfigObj Config { get; private set; }
 

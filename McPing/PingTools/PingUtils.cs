@@ -16,16 +16,29 @@ class PingUtils
         {
             var temp = IP.LastIndexOf(':') + 1;
             if (!ushort.TryParse(IP[temp..], out var port))
+            {
                 return null;
-            return Get(IP[0..(temp - 1)], port);
+            }
+            return Task.Run(() =>
+            {
+                return Get(IP[0..(temp - 1)], port);
+            });
         }
-        return Get(IP, 25565);
+        return Task.Run(() => 
+        {
+            return Get(IP, 25565);
+        });
     }
     public static Task<string> Get(string IP, string Port)
     {
         if (!ushort.TryParse(Port, out var port))
+        {
             return null;
-        return Get(IP, port);
+        }
+        return Task.Run(() =>
+        {
+            return Get(IP, port);
+        });
     }
     private static async Task<string> Get(string IP, ushort Port)
     {
@@ -36,12 +49,9 @@ class PingUtils
         };
         try
         {
-            Stopwatch pingWatcher = new();
             try
             {
-                pingWatcher.Start();
-                await tcp.ConnectAsync(IP, Port);
-                pingWatcher.Stop();
+                tcp.Connect(IP, Port);
             }
             catch (SocketException)
             {
@@ -61,9 +71,7 @@ class PingUtils
                     };
                     try
                     {
-                        pingWatcher.Restart();
-                        await tcp.ConnectAsync(IP = result.TARGET[..^1], Port = result.PORT);
-                        pingWatcher.Stop();
+                        tcp.Connect(IP = result.TARGET[..^1], Port = result.PORT);
                     }
                     catch
                     {
@@ -78,7 +86,6 @@ class PingUtils
             PCServerInfo info = new();
             if (info.StartGetServerInfo(tcp, IP, Port))
             {
-                info.ServerMotd.Ping = pingWatcher.ElapsedMilliseconds;
                 return GenShow.Gen(info);
             }
         }
