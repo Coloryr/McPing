@@ -4,8 +4,10 @@ namespace McPing;
 
 record RobotObj
 {
+    public bool IsOnebot { get; set; }
     public string Url { get; set; }
     public string Authorization { get; set; }
+    public int Port { get; set; }
 }
 record ShowObj
 {
