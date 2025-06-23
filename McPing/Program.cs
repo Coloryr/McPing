@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using OneBotSharp.Objs.Event;
 using OneBotSharp.Objs.Message;
 using SixLabors.Fonts;
+using SixLabors.ImageSharp.Drawing;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ namespace McPing;
 
 static class Program
 {
-    public const string Version = "2.1.0";
+    public const string Version = "2.1.1";
     public static string RunLocal { get; private set; }
     public static ConfigObj Config { get; private set; }
 
@@ -26,8 +27,26 @@ static class Program
     private static readonly ConcurrentDictionary<string, int> _delaySave = new();
     private static readonly Timer _timer = new(Tick, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
+    private static int _time_count;
+
     private static void Tick(object sender)
     {
+        if (!Config.Robot.IsOnebot)
+        {
+            _time_count++;
+            if (_time_count >= 30)
+            {
+                _time_count = 0;
+                Task.Run(() =>
+                {
+                    NoneBot.Send(JsonConvert.SerializeObject(new
+                    {
+                        ping = ""
+                    }));
+                });
+            }
+        }
+
         List<string> remove = [];
         foreach (var item in _delaySave)
         {
@@ -44,31 +63,67 @@ static class Program
         }
     }
 
-    private static void SendMessageGroup(JObject json, string str)
+    private static void SendMessage(bool isuser,JObject json, string str)
     {
-        NoneBot.Send(JsonConvert.SerializeObject(new 
-        { 
-            group_id = json["group_id"],
-            msg_id = json["msg_id"],
-            text = str,
-            event_id = json["event_id"]
-        }));
+        if (isuser)
+        {
+            NoneBot.Send(JsonConvert.SerializeObject(new
+            {
+                user_id = json["user_id"],
+                msg_id = json["msg_id"],
+                text = str,
+                event_id = json["event_id"]
+            }));
+        }
+        else
+        {
+            NoneBot.Send(JsonConvert.SerializeObject(new
+            {
+                group_id = json["group_id"],
+                msg_id = json["msg_id"],
+                text = str,
+                event_id = json["event_id"]
+            }));
+        }
     }
 
-    private static void SendMessageGroupImg(JObject json, string str)
+    private static void SendMessageImg(bool isuser, JObject json, string str)
     {
-        NoneBot.Send(JsonConvert.SerializeObject(new
+        if (isuser)
         {
-            group_id = json["group_id"],
-            msg_id = json["msg_id"],
-            image = str,
-            event_id = json["event_id"]
-        }));
+            NoneBot.Send(JsonConvert.SerializeObject(new
+            {
+                user_id = json["user_id"],
+                msg_id = json["msg_id"],
+                image = str,
+                event_id = json["event_id"]
+            }));
+        }
+        else
+        {
+            NoneBot.Send(JsonConvert.SerializeObject(new
+            {
+                group_id = json["group_id"],
+                msg_id = json["msg_id"],
+                image = str,
+                event_id = json["event_id"]
+            }));
+        }
     }
 
     public static void Message(string json)
     { 
         var obj = JObject.Parse(json);
+        if (obj.ContainsKey("pong"))
+        {
+            return;
+        }
+
+        bool isUser = false;
+        if (obj.ContainsKey("is_user"))
+        {
+            isUser = true;
+        }
         var message = obj["messages"].ToString().Split(' ');
         var user = obj["user_id"].ToString();
 
@@ -78,27 +133,27 @@ static class Program
             {
                 Task.Run(async () =>
                 {
-                    SendMessageGroup(obj, $"正在获取[{Config.DefaultIP}]");
+                    SendMessage(isUser, obj, $"正在获取[{Config.DefaultIP}]");
                     string local = await PingUtils.Get(Config.DefaultIP);
                     if (local == null)
                     {
-                        SendMessageGroup(obj, $"获取[{Config.DefaultIP}]错误");
+                        SendMessage(isUser, obj, $"获取[{Config.DefaultIP}]错误");
                     }
                     else
                     {
-                        SendMessageGroupImg(obj, local);
+                        SendMessageImg(isUser, obj, local);
                     }
                 });
                 return;
             }
             if (message.Length == 1)
             {
-                SendMessageGroup(obj, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
+                SendMessage(isUser, obj, $"输入{Config.Head} [IP] [端口](可选) 来生成服务器Motd图片，支持JAVA版和BE版");
                 return;
             }
-            if (_delaySave.ContainsKey(user))
+            if (!isUser && _delaySave.ContainsKey(user))
             {
-                SendMessageGroup(obj, $"查询过于频繁");
+                SendMessage(isUser, obj, $"查询过于频繁");
                 return;
             }
             var ip = message[1];
@@ -107,28 +162,28 @@ static class Program
                 var port = message[2];
                 if (string.IsNullOrWhiteSpace(ip))
                 {
-                    Get(obj, port);
+                    Get(isUser, obj, port);
                 }
                 else
                 {
                     Task.Run(async () =>
                     {
-                        SendMessageGroup(obj, $"正在获取[{ip}:{port}]");
+                        SendMessage(isUser, obj, $"正在获取[{ip}:{port}]");
                         string local = await PingUtils.Get(ip, port);
                         if (local == null)
                         {
-                            SendMessageGroup(obj, $"获取[{ip}:{port}]错误");
+                            SendMessage(isUser, obj, $"获取[{ip}:{port}]错误");
                         }
                         else
                         {
-                            SendMessageGroupImg(obj, local);
+                            SendMessageImg(isUser, obj, local);
                         }
                     });
                 }
             }
             else
             {
-                Get(obj, ip);
+                Get(isUser, obj, ip);
             }
             _delaySave.TryAdd(user, Config.Delay);
         }
@@ -225,19 +280,19 @@ static class Program
         });
     }
 
-    private static void Get(JObject group, string ip)
+    private static void Get(bool isuser, JObject group, string ip)
     {
         Task.Run(async () =>
         {
-            SendMessageGroup(group, $"正在获取[{ip}]");
+            SendMessage(isuser, group, $"正在获取[{ip}]");
             string local = await PingUtils.Get(ip);
             if (local == null)
             {
-                SendMessageGroup(group, $"获取[{ip}]错误");
+                SendMessage(isuser, group, $"获取[{ip}]错误");
             }
             else
             {
-                SendMessageGroupImg(group, local);
+                SendMessageImg(isuser, group, local);
             }
         });
     }
