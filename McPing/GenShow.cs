@@ -170,6 +170,12 @@ static class GenShow
                 DrawChat(ref image, ref x, ref y, item);
             }
         }
+
+        if (chat.Text?.EndsWith("\n") == true)
+        {
+            x = 80;
+            y += 20;
+        }
     }
 
     public static string Gen(IServerInfo info)
