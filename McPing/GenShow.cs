@@ -38,7 +38,7 @@ static class GenShow
 
     public static bool Init()
     {
-        _picDir = $"{Program.RunLocal}{_picName}/";
+        _picDir = Path.Combine(Program.RunLocal, _picName);
         if (!Directory.Exists(_picDir))
         {
             Directory.CreateDirectory(_picDir);
@@ -243,7 +243,7 @@ static class GenShow
                 Origin = new PointF(600, 30)
             }, $"{info.ServerMotd.Ping}", info.ServerMotd.Ping > 100 ? _badPingColor : _goodPingColor));
 
-            string local = $"{_picDir}{info.ServerMotd.ServerAddress}_{info.ServerMotd.ServerPort}.png";
+            string local = Path.Combine(_picDir, $"{info.ServerMotd.ServerAddress}_{info.ServerMotd.ServerPort}.png");
             img.SaveAsPng(local);
             Program.LogOut("生成图片" + local);
             return local;
