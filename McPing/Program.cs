@@ -133,11 +133,11 @@ static class Program
             {
                 Task.Run(async () =>
                 {
-                    SendMessage(isUser, obj, $"正在获取[{Config.DefaultIP}]");
+                    SendMessage(isUser, obj, $"正在获取[{Config.DefaultIP.Replace('.', '_')}]");
                     string local = await PingUtils.Get(Config.DefaultIP);
                     if (local == null)
                     {
-                        SendMessage(isUser, obj, $"获取[{Config.DefaultIP}]错误");
+                        SendMessage(isUser, obj, $"获取[{Config.DefaultIP.Replace('.', '_')}]错误");
                     }
                     else
                     {
@@ -168,11 +168,11 @@ static class Program
                 {
                     Task.Run(async () =>
                     {
-                        SendMessage(isUser, obj, $"正在获取[{ip}:{port}]");
+                        SendMessage(isUser, obj, $"正在获取[{ip.Replace('.', '_')}:{port}]");
                         string local = await PingUtils.Get(ip, port);
                         if (local == null)
                         {
-                            SendMessage(isUser, obj, $"获取[{ip}:{port}]错误");
+                            SendMessage(isUser, obj, $"获取[{ip.Replace('.', '_')}:{port}]错误");
                         }
                         else
                         {
